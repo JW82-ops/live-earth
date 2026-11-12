@@ -159,6 +159,17 @@ body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
 .hrow{display:flex;align-items:center;gap:10px;pointer-events:auto}
 .hrow .mini{appearance:none;border:1px solid var(--line);background:rgba(9,14,23,.72);color:var(--ink);font:inherit;font-size:11px;border-radius:99px;padding:3px 9px;cursor:pointer;text-shadow:none}
 .favs .mini{color:var(--ink)}
+.set-head,.set-row{display:grid;grid-template-columns:1fr 58px 58px;align-items:center;gap:6px}
+.set-head{font-size:11px;color:var(--muted);text-align:center}
+.set-list{display:flex;flex-direction:column;gap:2px}
+.set-row{padding:6px 2px;border-bottom:1px solid var(--line);font-size:14px}
+.set-row:last-child{border-bottom:0}
+.set-row label{display:flex;justify-content:center;cursor:pointer}
+.sw{appearance:none;-webkit-appearance:none;width:38px;height:22px;border-radius:99px;background:rgba(255,255,255,.12);position:relative;cursor:pointer;transition:background .2s;margin:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#cfd6e0;transition:transform .2s}
+.sw:checked{background:var(--sun)}.sw:checked::after{transform:translateX(16px);background:#1a1205}
+.sw:disabled{opacity:.35;cursor:default}
+.sw:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 #me-btn i{background:#4aa8ff;box-shadow:0 0 0 2px rgba(74,168,255,.35)}#wind-btn i{background:#9fd4ff}#sat-btn i{background:#9ec6ff}#con-btn i{background:#7fa6d9}#fire-btn i{background:#ff7a2a}
 .p-head .star{font-size:17px;width:34px;padding:0;color:var(--sun);line-height:1}
 #air-btn i{background:#4aa8ff}#volc-btn i{background:#ff6a3d}#flight-btn i{background:#e8f1ff}#moon-btn i{background:#d9d9dc}
@@ -219,7 +230,7 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
 <div id="loading">지구를 불러오는 중…</div>
 
 <div class="hud">
-  <div class="hrow"><h1>라이브 어스</h1><button id="lang-btn" class="mini" type="button" aria-label="Language">EN</button></div>
+  <div class="hrow"><h1>라이브 어스</h1><button id="lang-btn" class="mini" type="button" aria-label="Language">EN</button><button id="set-btn" class="mini" type="button" aria-label="설정">⚙ 설정</button></div>
   <div class="clock" id="clock">UTC --:--:--</div>
   <div class="tools">
     <div class="search">
@@ -227,7 +238,7 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
       <div id="q-list" role="listbox"></div>
     </div>
     <div class="layers favs" id="favs" hidden aria-label="즐겨찾기"></div>
-    <div class="timebar">
+    <div class="timebar" id="timebar">
       <label for="when" id="when-label">시간 이동</label>
       <input id="when" type="range" min="-720" max="720" step="10" value="0" aria-label="낮과 밤을 앞뒤 12시간까지 이동">
       <button class="mini" id="now" type="button" disabled>지금</button>
@@ -281,6 +292,20 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
     <div class="note" id="ts-tlnote"></div>
   </div>
 </div>
+<div id="ssheet" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ss-h">
+    <div class="ts-top"><h2 id="ss-h">설정</h2><button id="ss-x" class="xbtn" type="button" aria-label="닫기">×</button></div>
+    <div class="note">고른 상태는 이 기기에 저장돼서 다음에 열 때도 그대로 유지돼요.</div>
+    <div class="ts-h3">지구 위 레이어</div>
+    <div class="set-head"><span></span><span>켜기</span><span>버튼</span></div>
+    <div id="ss-layers" class="set-list"></div>
+    <div class="ts-h3">나라 패널에 보일 칸</div>
+    <div id="ss-secs" class="ts-grid"></div>
+    <div class="ts-h3">화면</div>
+    <div id="ss-ui" class="ts-grid"></div>
+    <div class="ts-btns"><button id="ss-reset" type="button">기본값으로 되돌리기</button></div>
+  </div>
+</div>
 <div id="recdone" class="overlay" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rd-h">
     <div class="ts-top"><h2 id="rd-h">영상이 만들어졌어요</h2><button id="rd-x" class="xbtn" type="button" aria-label="닫기">×</button></div>
@@ -292,7 +317,7 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
     </div>
   </div>
 </div>
-<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 지구 위 점·아이콘·달을 누르면 정보 · 투어로 자동 감상과 영상 저장</div>
+<div class="hint" id="hint">드래그로 회전 · 핀치/휠로 확대 · 지구 위 점·아이콘·달을 누르면 정보 · 투어로 자동 감상과 영상 저장</div>
 
 <aside id="panel" aria-live="polite">
   <div class="p-head">
@@ -305,34 +330,34 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
   <div class="p-body">
    <div id="alt" hidden></div>
    <div id="cty">
-    <section>
+    <section data-sec="time">
       <div class="s-head"><h3>현지 시각</h3><span class="chip live">실시간</span></div>
       <div class="big" id="p-time">--:--:--</div>
       <div class="sub" id="p-date"></div>
       <div class="sky" id="p-sky"><i></i><span></span></div>
     </section>
-    <section>
+    <section data-sec="info">
       <div class="s-head"><h3>기본 정보</h3></div>
       <div class="rows" id="p-info"></div>
     </section>
-    <section>
+    <section data-sec="fx">
       <div class="s-head"><h3>환율</h3><span class="chip" id="fx-chip"></span></div>
       <div class="rows" id="p-fx"></div>
     </section>
-    <section>
+    <section data-sec="wx">
       <div class="s-head"><h3>날씨</h3><span class="chip" id="wx-chip"></span></div>
       <div id="p-wx"></div>
       <div id="p-air"></div>
     </section>
-    <section>
+    <section data-sec="news">
       <div class="s-head"><h3>최신 뉴스</h3><span class="chip" id="news-chip"></span></div>
       <div class="links" id="p-news"></div>
     </section>
-    <section>
+    <section data-sec="mag">
       <div class="s-head"><h3>매거진</h3><span class="chip" id="mag-chip"></span></div>
       <div id="p-mag"></div>
     </section>
-    <section>
+    <section data-sec="music">
       <div class="s-head"><h3>음악</h3><span class="chip">YouTube에서 열기</span></div>
       <div class="links" id="p-music"></div>
     </section>
@@ -390,7 +415,7 @@ var I18N_PAIRS=[
 ["지금 위치","Position now"],["스타링크 인터넷 위성","Starlink internet satellite"],["우주정거장·유인 우주선","Space station · crewed craft"],["허블 우주망원경","Hubble Space Telescope"],["스페이스X가 띄운 위성 인터넷용 위성이에요. 수천 기가 낮은 궤도를 촘촘히 돌고 있어요.","SpaceX satellites for internet service. Thousands fill low Earth orbit."],["1990년에 발사된 우주망원경이에요. 약 95분에 한 바퀴씩 돌아요.","A space telescope launched in 1990. It circles the Earth about every 95 minutes."],["사람이 머무는 우주정거장이나 그와 함께 움직이는 우주선이에요. 중국 톈궁(CSS)도 여기 들어 있어요.","Crewed space stations and the craft docked with them, including China's Tiangong (CSS)."],["궤도 요소 출처: Celestrak","Orbit data: Celestrak"],["위성 데이터를 아직 받지 못했어요. 잠시 뒤 다시 눌러 주세요.","Satellite data isn't ready yet. Try again shortly."],["위성 위치 계산을 시작하지 못했어요.","Couldn't start satellite calculations."],["바람 데이터를 아직 받지 못했어요. 잠시 뒤 다시 눌러 주세요.","Wind data isn't ready yet. Try again shortly."],
 ["산불 감지","Fire detections"],["최근 24시간","Last 24 hours"],["이 근처(약 50km 칸)에서 위성이 감지한 불","Fires detected by satellite in this ~50 km cell"],["열 방출량 합계","Total fire radiative power"],["VIIRS 위성이 감지한 뜨거운 지점이라 산불뿐 아니라 농경지 소각, 공장 열원도 섞여 있을 수 있어요.","These are VIIRS hot spots, which can include crop burning and industrial heat as well as wildfires."],["산불 레이어는 NASA FIRMS 무료 키가 있어야 켜져요. 키를 저장소 Secrets에 FIRMS_KEY로 넣으면 다음 업데이트부터 보여요.","The wildfire layer needs a free NASA FIRMS key. Add it to the repository secrets as FIRMS_KEY and it appears from the next update."],["바다·섬","Sea or island"],
 ["이 기기에서는 3D(WebGL)를 켤 수 없어요.","3D (WebGL) isn't available on this device."],["지구 이미지를 불러오지 못했어요. 새로고침해 주세요.","Couldn't load the Earth images. Please refresh."],["이 지역의 상세 정보가 없어요.","No details for this area."],["수도","Capital"],
-["실제 위성 구름","Real satellite clouds"],["업데이트","updated"],["위치는 매 순간 계산","position computed live"],["궤도 요소(TLE)","Orbit elements (TLE)"],["NOAA 예보","NOAA forecast"],["태양 직하점","Subsolar point"],["오로라 Kp","Aurora Kp"],["화면 속","on screen"],["(영어)","(English)"],["(한국어)","(Korean)"],["내 위치에서","From my location"]
+["실제 위성 구름","Real satellite clouds"],["업데이트","updated"],["위치는 매 순간 계산","position computed live"],["궤도 요소(TLE)","Orbit elements (TLE)"],["NOAA 예보","NOAA forecast"],["태양 직하점","Subsolar point"],["오로라 Kp","Aurora Kp"],["화면 속","on screen"],["(영어)","(English)"],["설정","Settings"],["⚙ 설정","⚙ Settings"],["고른 상태는 이 기기에 저장돼서 다음에 열 때도 그대로 유지돼요.","Your choices are saved on this device and kept next time."],["지구 위 레이어","Globe layers"],["켜기","On"],["버튼","Button"],["나라 패널에 보일 칸","Country panel sections"],["화면","Screen"],["기본값으로 되돌리기","Reset to defaults"],["시간 이동 막대","Time shift bar"],["즐겨찾기 줄","Favorites row"],["조작 안내 문구","Help text"],["투어 버튼","Tour button"],["내 위치 버튼","My location button"],["(한국어)","(Korean)"],["내 위치에서","From my location"]
 ];
 var I18N_MAP={},I18N_FRAG=[];
 I18N_PAIRS.forEach(function(p){I18N_MAP[p[0]]=p[1];I18N_FRAG.push(p)});I18N_FRAG.sort(function(a,b){return b[0].length-a[0].length});
@@ -1734,7 +1759,7 @@ if(window.SKY){
     var a=[];SKY.l.forEach(function(L){for(var j=0;j<L.length-1;j++){var p=ll2v(L[j][1],L[j][0],118),q=ll2v(L[j+1][1],L[j+1][0],118);a.push(p.x,p.y,p.z,q.x,q.y,q.z)}});
     var lg=new THREE.BufferGeometry();lg.setAttribute("position",new THREE.BufferAttribute(new Float32Array(a),3));
     conGroup.add(new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x7fa6d9,transparent:true,opacity:0.22,depthWrite:false})));
-    SKY.c.filter(function(x){return +x[4]===1}).forEach(function(x){var sp=textSprite(LANG==="en"?x[3]:x[2],"rgba(160,190,230,.62)",26);sp.position.copy(ll2v(x[1],x[0],116));sp.scale.set(sp.userData.w/sp.userData.h*4.2,4.2,1);conGroup.add(sp)});
+    SKY.c.filter(function(x){return +x[4]===1}).forEach(function(x){var sp=textSprite(LANG==="en"?x[3]:x[2],"rgba(160,190,230,.62)",26);sp.position.copy(ll2v(x[1],x[0],116));var ls_=innerWidth<=720?2.6:3.4;sp.scale.set(sp.userData.w/sp.userData.h*ls_,ls_,1);conGroup.add(sp)});
   })();
 }
 function textSprite(txt,color,px){
@@ -1768,7 +1793,7 @@ var PLANETS=Object.keys(PL_EL).map(function(k){
   var E_=PL_EL[k],cv=document.createElement("canvas");cv.width=cv.height=64;var g=cv.getContext("2d"),gr=g.createRadialGradient(32,32,0,32,32,32);
   gr.addColorStop(0,"#fff");gr.addColorStop(.18,E_[12]);gr.addColorStop(.45,E_[12]+"55");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,64,64);
   var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));sp.scale.set(k==="venus"||k==="jupiter"?5:3.8,k==="venus"||k==="jupiter"?5:3.8,1);
-  var lb=textSprite(LANG==="en"?PL_EN[k]:E_[0],"rgba(255,236,200,.85)",28);lb.scale.set(lb.userData.w/lb.userData.h*3.6,3.6,1);
+  var lb=textSprite(LANG==="en"?PL_EN[k]:E_[0],"rgba(255,236,200,.85)",28);var pl_=innerWidth<=720?2.4:3.0;lb.scale.set(lb.userData.w/lb.userData.h*pl_,pl_,1);
   skyGroup.add(sp);skyGroup.add(lb);
   return {key:k,ko:LANG==="en"?PL_EN[k]:E_[0],desc:E_[13],sp:sp,lb:lb,alt:-90,wp:new THREE.Vector3()};
 });
@@ -1957,6 +1982,63 @@ function endTimelapse(){
   TL=null;timeOverride=null;tlPts.visible=false;tlMat.uniforms.now.value=-1e9;
   if(saveVis){quakePts.visible=saveVis[0];issGroup.visible=saveVis[1];satPts.visible=saveVis[2];flPts.visible=saveVis[3];stormGroup.visible=saveVis[4];volcGroup.visible=saveVis[5];moonOn=saveVis[6];saveVis=null}
 }
+
+/* ---------- 설정 (켜고 끄기 · 버튼 표시 · 패널 칸) ---------- */
+(function(){
+  var LAYERS=[["cloud","구름",1],["wind-btn","바람",0],["quake-btn","지진",1],["storm-btn","태풍",1],["volc-btn","화산",1],["aurora-btn","오로라",1],["iss-btn","국제우주정거장",1],["sat-btn","위성",0],["moon-btn","달",1],["con-btn","별자리",1],["air-btn","미세먼지",0],["flight-btn","항공편",0],["fire-btn","산불",0]];
+  var EXTRA=[["tour-btn","투어 버튼"],["me-btn","내 위치 버튼"]];
+  var SECS=[["time","현지 시각"],["info","기본 정보"],["fx","환율"],["wx","날씨"],["news","최신 뉴스"],["mag","매거진"],["music","음악"]];
+  var UIS=[["timebar","시간 이동 막대"],["favs","즐겨찾기 줄"],["hint","조작 안내 문구"]];
+  var ST={on:{},btn:{},sec:{},ui:{}};
+  try{var sv=JSON.parse(localStorage.getItem("le-set")||"null");if(sv)["on","btn","sec","ui"].forEach(function(k){if(sv[k])ST[k]=sv[k]})}catch(_){}
+  function save(){try{localStorage.setItem("le-set",JSON.stringify(ST))}catch(_){}}
+  function isOn(id){return $(id).getAttribute("aria-pressed")==="true"}
+  function setLayer(id,want){
+    if(isOn(id)===want)return true;
+    if(id==="fire-btn"&&!FIRES)return false;
+    $(id).click();return isOn(id)===want;
+  }
+  function applyVis(){
+    LAYERS.concat(EXTRA).forEach(function(L){$(L[0]).hidden=ST.btn[L[0]]===false});
+    SECS.forEach(function(x){var el_=document.querySelector('#cty section[data-sec="'+x[0]+'"]');if(el_)el_.hidden=ST.sec[x[0]]===false});
+    $("timebar").hidden=ST.ui.timebar===false;$("hint").hidden=ST.ui.hint===false;
+    if(ST.ui.favs===false)$("favs").hidden=true;else renderFavs();
+  }
+  // 저장된 켜기/끄기 상태 적용 (데이터가 늦게 오는 레이어는 몇 번 다시 시도)
+  var tries=0;
+  (function applyOn(){
+    var pending=false;
+    LAYERS.forEach(function(L){var want=ST.on[L[0]];if(want==null)return;if(!setLayer(L[0],want))pending=true});
+    if(pending&&++tries<12)setTimeout(applyOn,1000);
+  })();
+  // 버튼으로 켜고 끈 상태도 기억
+  LAYERS.forEach(function(L){$(L[0]).addEventListener("click",function(){setTimeout(function(){ST.on[L[0]]=isOn(L[0]);save();syncSheet()},0)})});
+  var _rf=renderFavs;renderFavs=function(){_rf();if(ST.ui.favs===false)$("favs").hidden=true};
+  function sw(checked,onChange,disabled){var i=document.createElement("input");i.type="checkbox";i.className="sw";i.checked=checked;i.disabled=!!disabled;i.addEventListener("change",function(){onChange(i.checked)});var l=document.createElement("label");l.appendChild(i);return l}
+  function build(){
+    var box=$("ss-layers");box.textContent="";
+    LAYERS.forEach(function(L){
+      var r=el("div","set-row");r.appendChild(el("span",null,L[1]));
+      var on=sw(isOn(L[0]),function(v){if(!setLayer(L[0],v)){notify(L[0]==="fire-btn"?"산불 데이터가 아직 없어요.":"지금은 바꿀 수 없어요.");syncSheet();return}ST.on[L[0]]=v;save()});on.firstChild.id="ss-on-"+L[0];on.firstChild.setAttribute("aria-label",L[1]+" 켜기");r.appendChild(on);
+      var bt=sw(ST.btn[L[0]]!==false,function(v){ST.btn[L[0]]=v;save();applyVis()});bt.firstChild.setAttribute("aria-label",L[1]+" 버튼");r.appendChild(bt);
+      box.appendChild(r);
+    });
+    EXTRA.forEach(function(L){var r=el("div","set-row");r.appendChild(el("span",null,L[1]));r.appendChild(el("span"));var bt=sw(ST.btn[L[0]]!==false,function(v){ST.btn[L[0]]=v;save();applyVis()});bt.firstChild.setAttribute("aria-label",L[1]);r.appendChild(bt);box.appendChild(r)});
+    var sb=$("ss-secs");sb.textContent="";
+    SECS.forEach(function(x){var l=el("label","ts-chk"),i=document.createElement("input");i.type="checkbox";i.checked=ST.sec[x[0]]!==false;i.addEventListener("change",function(){ST.sec[x[0]]=i.checked;save();applyVis()});l.appendChild(i);l.appendChild(document.createTextNode(x[1]));sb.appendChild(l)});
+    var ub=$("ss-ui");ub.textContent="";
+    UIS.forEach(function(x){var l=el("label","ts-chk"),i=document.createElement("input");i.type="checkbox";i.checked=ST.ui[x[0]]!==false;i.addEventListener("change",function(){ST.ui[x[0]]=i.checked;save();applyVis()});l.appendChild(i);l.appendChild(document.createTextNode(x[1]));ub.appendChild(l)});
+  }
+  function syncSheet(){LAYERS.forEach(function(L){var i=$("ss-on-"+L[0]);if(i)i.checked=isOn(L[0])})}
+  $("set-btn").addEventListener("click",function(){build();$("ssheet").hidden=false});
+  $("ss-x").addEventListener("click",function(){$("ssheet").hidden=true});
+  $("ssheet").addEventListener("click",function(e){if(e.target===this)this.hidden=true});
+  $("ss-reset").addEventListener("click",function(){
+    LAYERS.forEach(function(L){setLayer(L[0],!!L[2])});
+    ST={on:{},btn:{},sec:{},ui:{}};save();applyVis();build();
+  });
+  applyVis();
+})();
 
 /* 타임랩스·언어 버튼 */
 $("tl-play").addEventListener("click",function(){startTimelapse("play")});
