@@ -103,8 +103,8 @@ async function updateNews() {
 
 // 위성 구름 지도(3시간마다 갱신되는 공개 지도). 받을 수 없으면 기존 파일을 그대로 둔다.
 const CLOUD_SOURCES = [
-  ["https://clouds.matteason.co.uk/images/4096x2048/clouds-alpha.png", "clouds.png"],
   ["https://clouds.matteason.co.uk/images/2048x1024/clouds-alpha.png", "clouds.png"],
+  ["https://clouds.matteason.co.uk/images/4096x2048/clouds-alpha.png", "clouds.png"],
   ["https://clouds.matteason.co.uk/images/2048x1024/clouds.jpg", "clouds.jpg"],
 ];
 async function updateClouds() {
@@ -122,17 +122,27 @@ async function updateClouds() {
 }
 
 await mkdir(DATA, { recursive: true });
+// 이전 데이터는 저장소가 아니라 배포된 사이트에서 가져온다 (수집 실패 시 유지용).
 let prev = {};
-try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
+if (process.env.SITE_URL) {
+  try { prev = JSON.parse((await get(process.env.SITE_URL + "data/news.json")) || "{}"); } catch {}
+}
+if (!prev.items) {
+  try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
+}
 
-const [{ items, ok }, clouds] = await Promise.all([updateNews(), updateClouds()]);
+let [{ items, ok }, clouds] = await Promise.all([updateNews(), updateClouds()]);
+if (!clouds && prev.clouds && process.env.SITE_URL) {
+  const buf = await get(process.env.SITE_URL + "data/" + prev.clouds.file, true);
+  if (buf && buf.length > 50000) { await writeFile(new URL(prev.clouds.file, DATA), buf); clouds = prev.clouds; }
+}
 
 // 뉴스 서버가 막혀 대부분 실패한 경우 이전 기사를 유지한다.
 const keepOld = ok < list.length * 0.3 && prev.items;
 const out = {
   updatedAt: keepOld ? prev.updatedAt : new Date().toISOString(),
   items: keepOld ? prev.items : items,
-  clouds: clouds || prev.clouds || null,
+  clouds: clouds || null,
 };
 await writeFile(new URL("news.json", DATA), JSON.stringify(out));
 console.log(keepOld ? "news: kept previous data" : "news: written");
