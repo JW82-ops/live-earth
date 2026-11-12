@@ -2461,7 +2461,9 @@ function loadBigCities(){
   if(bigLoading)return;bigLoading=true;
   getJSON("data/cities.json?v="+Math.floor(Date.now()/(24*3600000))).then(function(j){
     if(!j||!j.items)throw 0;var ko=LANG!=="en";
-    BIGC=j.items.map(function(x){return {t:"t",name:(ko&&x[0])?x[0]:x[1],pop:x[4],cap:x[6],v:ll2v(x[2],x[3],1.003),n:ll2v(x[2],x[3],1),el:null}});
+    var KOFIX={Seoul:"서울",Nangen:"남원",Muan:"무안",Gyeongsan:"경산",Gimhae:"김해",Pyongyang:"평양"},OLDN={"경성":1,"한성":1,"한양":1,"京城":1};
+    function koName(x){var e=x[1],k=x[0];if(KOFIX[e])return KOFIX[e];if(OLDN[k])return "";if(k&&(x[5]==="KR"||x[5]==="KP")&&k.length>=3&&/시$/.test(k))k=k.slice(0,-1);return k}
+    BIGC=j.items.map(function(x){var kn=ko?koName(x):"";return {t:"t",name:kn||x[1],pop:x[4],cap:x[6],v:ll2v(x[2],x[3],1.003),n:ll2v(x[2],x[3],1),el:null}});
     CLBL.forEach(function(L){if(L.el)L.el.style.display="none"});
   }).catch(function(){bigLoading=false});
 }

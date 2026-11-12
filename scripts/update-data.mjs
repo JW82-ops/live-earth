@@ -483,6 +483,10 @@ async function updateCities() {
     if (!keep) continue;
     let ko = "";
     for (const n of (c[3] || "").split(",")) if (HAN.test(n) && !LAT.test(n) && (!ko || n.length < ko.length)) ko = n;
+    const KOFIX = { Seoul: "서울", Nangen: "남원", Muan: "무안", Pyongyang: "평양" }, OLDN = new Set(["경성", "한성", "한양"]);
+    if (OLDN.has(ko)) ko = "";
+    if (KOFIX[c[2]]) ko = KOFIX[c[2]];
+    if (ko && (cc === "KR" || cc === "KP") && ko.length >= 3 && ko.endsWith("시")) ko = ko.slice(0, -1);
     items.push([ko, c[2] || c[1], +(+c[4]).toFixed(3), +(+c[5]).toFixed(3), Math.round(pop / 1000), cc, fc === "PPLC" ? 1 : 0]);
   }
   items.sort((a, b) => b[4] - a[4]);
