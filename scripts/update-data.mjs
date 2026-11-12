@@ -426,7 +426,7 @@ let [{ items, ok }, clouds, quakes, iss, storms, aurora, fxhist, air, volcanoes,
 ]);
 const [wind, sats, quakesYear, fires] = await Promise.all([
   maybe(prevWind, 5.9, updateWind, "wind"), maybe(prevSats, 11.9, updateSats, "sats"),
-  maybe(prevQY, 20, updateQuakesYear, "quakes-year"), maybe(prevFires, 2.9, updateFires, "fires"),
+  maybe(prevQY, 20, updateQuakesYear, "quakes-year"), maybe(prevFires?.cells?.length ? prevFires : null, 2.9, updateFires, "fires"),
 ]);
 for (const [n, v] of [["wind.json", wind], ["sats.json", sats], ["quakes-year.json", quakesYear], ["fires.json", fires]]) if (v) await writeFile(new URL(n, DATA), JSON.stringify(v));
 air = await keepOrPrev("air.json", air);
