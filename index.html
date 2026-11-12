@@ -196,9 +196,11 @@ body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
 .lg-i i.lg-bar{width:56px;height:6px;border-radius:3px}
 .lg-i i.lg-line{width:18px;height:0;border-radius:0}
 body.touring #legend,body.touring #labels{display:none}
-.ptabs{display:flex;gap:4px;padding:0 12px 10px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.p-head,.grab{flex:none}
+.p-body{flex:1 1 auto;min-height:0}
+.ptabs{flex:none;align-items:center;display:flex;gap:4px;padding:0 12px 10px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 .ptabs::-webkit-scrollbar{display:none}
-.ptabs button{appearance:none;flex:1;white-space:nowrap;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:8px 6px;cursor:pointer}
+.ptabs button{appearance:none;-webkit-appearance:none;flex:1 0 auto;min-height:36px;line-height:1.3;white-space:nowrap;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:8px 6px;cursor:pointer}
 .ptabs button[aria-selected="true"]{background:rgba(255,255,255,.08);color:var(--ink);box-shadow:inset 0 -2px 0 var(--sun)}
 #panel.alt .ptabs{display:none}
 #panel:not(.alt)[data-tab="ov"] #cty section:not([data-tab="ov"]),#panel:not(.alt)[data-tab="tr"] #cty section:not([data-tab="tr"]),#panel:not(.alt)[data-tab="sk"] #cty section:not([data-tab="sk"]),#panel:not(.alt)[data-tab="cu"] #cty section:not([data-tab="cu"]){display:none}
@@ -905,7 +907,7 @@ function renderWx(c){
         var ico=el("span","fc-i",ic(dly.weather_code[i]));ico.title=WMO[dly.weather_code[i]]||"";cell.appendChild(ico);
         cell.appendChild(el("span","fc-h",Math.round(dly.temperature_2m_max[i])+"°"));cell.appendChild(el("span","fc-l",Math.round(dly.temperature_2m_min[i])+"°"));
         var pp=dly.precipitation_probability_max&&dly.precipitation_probability_max[i];cell.appendChild(el("span","fc-p",pp!=null?pp+"%":""));fc.appendChild(cell)});
-      box.appendChild(el("div","ts-h3","7일 예보"));box.appendChild(fc);
+      var fh=el("div","ts-h3","7일 예보");fh.style.marginTop="14px";box.appendChild(fh);box.appendChild(fc);
     }
   }
   if(!c||c.lat==null){fallback();return}
