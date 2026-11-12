@@ -156,6 +156,11 @@ body.touring #caption{display:flex}
 #tourhint{position:fixed;right:16px;top:max(16px,env(safe-area-inset-top));font-size:12px;color:var(--muted);display:none;pointer-events:none}
 body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
 @keyframes fadeaway{0%,70%{opacity:1}100%{opacity:0}}
+.hrow{display:flex;align-items:center;gap:10px;pointer-events:auto}
+.hrow .mini{appearance:none;border:1px solid var(--line);background:rgba(9,14,23,.72);color:var(--ink);font:inherit;font-size:11px;border-radius:99px;padding:3px 9px;cursor:pointer;text-shadow:none}
+.favs .mini{color:var(--ink)}
+#me-btn i{background:#4aa8ff;box-shadow:0 0 0 2px rgba(74,168,255,.35)}#wind-btn i{background:#9fd4ff}#sat-btn i{background:#9ec6ff}#con-btn i{background:#7fa6d9}#fire-btn i{background:#ff7a2a}
+.p-head .star{font-size:17px;width:34px;padding:0;color:var(--sun);line-height:1}
 #air-btn i{background:#4aa8ff}#volc-btn i{background:#ff6a3d}#flight-btn i{background:#e8f1ff}#moon-btn i{background:#d9d9dc}
 .mag-g{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:6px}
 .mag{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid var(--line)}
@@ -214,13 +219,14 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
 <div id="loading">지구를 불러오는 중…</div>
 
 <div class="hud">
-  <h1>라이브 어스</h1>
+  <div class="hrow"><h1>라이브 어스</h1><button id="lang-btn" class="mini" type="button" aria-label="Language">EN</button></div>
   <div class="clock" id="clock">UTC --:--:--</div>
   <div class="tools">
     <div class="search">
       <input id="q" type="search" placeholder="나라 검색 (예: 프랑스, Japan)" autocomplete="off" aria-label="나라 검색">
       <div id="q-list" role="listbox"></div>
     </div>
+    <div class="layers favs" id="favs" hidden aria-label="즐겨찾기"></div>
     <div class="timebar">
       <label for="when" id="when-label">시간 이동</label>
       <input id="when" type="range" min="-720" max="720" step="10" value="0" aria-label="낮과 밤을 앞뒤 12시간까지 이동">
@@ -228,6 +234,8 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
     </div>
     <div class="layers" role="group" aria-label="지구 위에 표시할 것">
       <button class="mini" id="tour-btn" type="button" title="지구를 자동으로 둘러보는 시네마틱 투어 · 영상 저장"><i></i><span>투어</span></button>
+      <button class="mini" id="me-btn" type="button" title="내 위치 기준으로 보기"><i></i><span>내 위치</span></button>
+      <button class="mini" id="wind-btn" type="button" aria-pressed="false" title="전 세계 바람 흐름 (6시간마다 갱신)"><i></i><span>바람</span></button>
       <button class="mini" id="cloud" type="button" aria-pressed="true" title="연출용 구름 (실제 구름 아님)"><i></i><span>구름</span></button>
       <button class="mini" id="quake-btn" type="button" aria-pressed="true" title="최근 24시간 규모 2.5 이상 지진"><i></i><span>지진</span></button>
       <button class="mini" id="iss-btn" type="button" aria-pressed="true" title="국제우주정거장 실시간 위치"><i></i><span>ISS</span></button>
@@ -235,8 +243,11 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
       <button class="mini" id="aurora-btn" type="button" aria-pressed="true" title="NOAA 오로라 예보"><i></i><span>오로라</span></button>
       <button class="mini" id="volc-btn" type="button" aria-pressed="true" title="최근 화산 분화"><i></i><span>화산</span></button>
       <button class="mini" id="moon-btn" type="button" aria-pressed="true" title="달의 실제 방향과 위상"><i></i><span>달</span></button>
+      <button class="mini" id="sat-btn" type="button" aria-pressed="false" title="스타링크·우주정거장·허블 위성"><i></i><span>위성</span></button>
+      <button class="mini" id="con-btn" type="button" aria-pressed="true" title="별자리 선과 이름"><i></i><span>별자리</span></button>
       <button class="mini" id="air-btn" type="button" aria-pressed="false" title="나라별 초미세먼지 PM2.5"><i></i><span>미세먼지</span></button>
       <button class="mini" id="flight-btn" type="button" aria-pressed="false" title="지금 보고 있는 지역의 실시간 항공편"><i></i><span>항공편</span></button>
+      <button class="mini" id="fire-btn" type="button" aria-pressed="false" title="최근 24시간 위성 산불 감지 (NASA FIRMS)"><i></i><span>산불</span></button>
     </div>
   </div>
 </div>
@@ -260,6 +271,14 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
       <button id="ts-rec-h" type="button">● 가로 영상으로 저장 (16:9)</button>
     </div>
     <div class="note" id="ts-recnote">영상은 투어 한 바퀴(1~2분)가 끝나면 자동으로 만들어져요. 중간에 화면을 누르면 그때까지 저장돼요. 녹화 중에는 화면을 끄거나 다른 앱으로 넘어가지 마세요.</div>
+    <div class="ts-h3" style="margin-top:6px">1년 지진 타임랩스</div>
+    <div class="note">지난 1년 동안의 규모 5 이상 지진을 약 45초 동안 차례로 보여줘요. 계절에 따라 낮밤 경계가 기우는 모습도 함께 보여요.</div>
+    <div class="ts-btns">
+      <button id="tl-play" type="button">▶ 타임랩스 보기</button>
+      <button id="tl-rec-v" type="button">● 세로 영상 저장</button>
+      <button id="tl-rec-h" type="button">● 가로 영상 저장</button>
+    </div>
+    <div class="note" id="ts-tlnote"></div>
   </div>
 </div>
 <div id="recdone" class="overlay" hidden>
@@ -279,6 +298,7 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
   <div class="p-head">
     <div class="flag" id="p-flag"></div>
     <div class="p-title"><h2 id="p-name"></h2><p id="p-sub"></p></div>
+    <button id="fav" class="mini star" type="button" aria-pressed="false" title="즐겨찾기에 추가" hidden>☆</button>
     <button id="cmp" class="mini" type="button" title="다른 나라와 비교">비교</button>
     <button id="close" type="button" aria-label="패널 닫기">×</button>
   </div>
@@ -325,11 +345,86 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
 <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
 <script src="countries.js"></script>
 <script src="world.js"></script>
+<script src="sky.js"></script>
 <script src="snapshot.js"></script>
 <script>
 (function(){
 "use strict";
 var D2R=Math.PI/180, R2D=180/Math.PI;
+/* ---------- 언어 (한국어 / English) ---------- */
+var LANG="ko";try{LANG=localStorage.getItem("le-lang")||"ko"}catch(_){}
+var LOC=LANG==="en"?"en-US":"ko-KR",HANGUL=/[가-힣]/;
+var I18N_PAIRS=[
+["라이브 어스 · 실시간 3D 지구","Live Earth · Real-time 3D Globe"],["라이브 어스","Live Earth"],["지구를 불러오는 중…","Loading the Earth…"],
+["드래그로 회전 · 핀치/휠로 확대 · 지구 위 점·아이콘·달을 누르면 정보 · 투어로 자동 감상과 영상 저장","Drag to rotate · pinch/scroll to zoom · tap dots, icons or the Moon for details · Tour for an auto flight and video"],
+["3D 지구. 드래그로 회전, 핀치나 휠로 확대, 나라를 눌러 정보 보기","3D Earth. Drag to rotate, pinch or scroll to zoom, tap a country for details"],
+["나라 검색 (예: 프랑스, Japan)","Search a country (e.g. France, Japan)"],["나라 검색","Search a country"],["나라 이름 (예: 프랑스, Italy)","Country name (e.g. France, Italy)"],
+["일치하는 나라가 없어요","No matching country"],["시간 이동","Time shift"],["낮과 밤을 앞뒤 12시간까지 이동","Shift day and night up to 12 hours"],["지구 위에 표시할 것","What to show on the globe"],
+["투어","Tour"],["구름","Clouds"],["위성 구름","Satellite clouds"],["지진","Quakes"],["태풍","Storms"],["오로라","Aurora"],["화산","Volcanoes"],["달","Moon"],["미세먼지","Air quality"],["항공편","Flights"],["바람","Wind"],["위성","Satellites"],["별자리","Constellations"],["산불","Wildfires"],["산불 (설정 필요)","Wildfires (setup needed)"],["내 위치","My location"],["찾는 중…","Locating…"],["바람…","Wind…"],["위성…","Satellites…"],
+["연출용 구름 (실제 구름 아님)","Decorative clouds (not real)"],["최근 24시간 규모 2.5 이상 지진","Quakes M2.5+ in the last 24 hours"],["국제우주정거장 실시간 위치","Live ISS position"],["지금 활동 중인 태풍·허리케인·사이클론","Active typhoons, hurricanes and cyclones"],["NOAA 오로라 예보","NOAA aurora forecast"],["최근 화산 분화","Recent eruptions"],["달의 실제 방향과 위상","The Moon's real direction and phase"],["나라별 초미세먼지 PM2.5","PM2.5 by country"],["지금 보고 있는 지역의 실시간 항공편","Live flights in the area you're viewing"],["지구를 자동으로 둘러보는 시네마틱 투어 · 영상 저장","Cinematic auto tour · save as video"],
+["패널 닫기","Close panel"],["비교","Compare"],["다른 나라와 비교","Compare with another country"],["즐겨찾기에 추가","Add to favorites"],["즐겨찾기에서 빼기","Remove from favorites"],
+["현지 시각","Local time"],["실시간","Live"],["기본 정보","Basics"],["환율","Exchange rate"],["날씨","Weather"],["최신 뉴스","Latest news"],["매거진","Magazines"],["음악","Music"],["YouTube에서 열기","Opens YouTube"],
+["지역","Region"],["면적","Area"],["언어","Languages"],["한국과 시차","Time vs Korea"],["같은 시간","Same time"],["아시아","Asia"],["유럽","Europe"],["아프리카","Africa"],["아메리카","Americas"],["오세아니아","Oceania"],["남극","Antarctica"],
+["지금 낮","Daytime now"],["지금 밤","Night now"],["해 뜨거나 지는 중","Sunrise or sunset"],["태양 고도","Sun altitude"],["표준 시간대 정보가 없어요.","No time zone info."],
+["연결 안 됨","Not connected"],["링크로 보기","Open link"],["불러오는 중","Loading"],["불러오는 중…","Loading…"],["환율 데이터를 불러오지 못했어요.","Couldn't load exchange rates."],["이 지역 통화의 환율 데이터가 없어요.","No exchange rate for this currency."],
+["날씨 서버에 연결하지 못했어요. 아래에서 지금 날씨를 바로 열 수 있어요.","Couldn't reach the weather server. Open the current weather below."],["체감","Feels like"],["습도","Humidity"],["바람","Wind"],
+["맑음","Clear"],["대체로 맑음","Mostly clear"],["구름 조금","Partly cloudy"],["흐림","Overcast"],["안개","Fog"],["서리 안개","Rime fog"],["약한 이슬비","Light drizzle"],["이슬비","Drizzle"],["강한 이슬비","Heavy drizzle"],["어는 이슬비","Freezing drizzle"],["약한 비","Light rain"],["비","Rain"],["강한 비","Heavy rain"],["어는 비","Freezing rain"],["약한 눈","Light snow"],["눈","Snow"],["강한 눈","Heavy snow"],["싸락눈","Snow grains"],["약한 소나기","Light showers"],["소나기","Showers"],["강한 소나기","Heavy showers"],["약한 눈 소나기","Light snow showers"],["강한 눈 소나기","Heavy snow showers"],["뇌우","Thunderstorm"],["우박 동반 뇌우","Thunderstorm with hail"],["강한 우박 뇌우","Severe hail storm"],["날씨 코드","Weather code"],
+["원화 기준","In KRW"],["최근","last"],["영업일","business days"],["최저","Low"],["최고","High"],["유럽중앙은행 기준환율 (영업일 1회) · 위 실시간 환율과 조금 다를 수 있어요.","ECB reference rates (once per business day) · may differ slightly from the live rate above."],["원화로","In KRW"],["통화","Currency"],["둘 다","Both use"],["두 나라 통화의 환율 정보가 없어요.","No exchange rate for these currencies."],
+["더 많은","More"],["최신 기사","latest news"],["국가(國歌) 듣기","national anthem"],["대표곡 듣기","popular songs"],["대표 노래","popular songs"],
+["패션","Fashion"],["여행 · 라이프","Travel · Lifestyle"],["공식 사이트","Official sites"],["공식 사이트에서 최신호 보기","See the latest issue on the official site"],["표지와 본문은 각 매거진 공식 사이트에서 볼 수 있어요.","Covers and full stories are on each magazine's official site."],["검색으로 보기","Search"],["이 나라의 대표 매거진 목록은 아직 준비되지 않았어요. 아래에서 바로 찾아볼 수 있어요.","No magazine list for this country yet. You can search below."],["패션 매거진","fashion magazines"],["여행 기사","travel stories"],["확인","checked"],
+["발생 시각","Time"],["상세","Details"],["규모","Magnitude"],["깊이","Depth"],["위치","Location"],["강한 지진","strong"],["중간 지진","moderate"],["약한 지진","light"],["얕음","shallow"],["깊음","deep"],["바다 또는 해안","Sea or coast"],["육지","land"],["최근 지진 범례","Recent quake legend"],["규모 2.5~4.4","M2.5–4.4"],["6.0 이상","6.0+"],["6시간 안에 일어난 지진은 크게, 퍼지는 고리로 표시돼요.","Quakes from the last 6 hours are larger, with an expanding ring."],["USGS 상세 정보","USGS details"],["한국 시간","Korea time"],
+["국제우주정거장 (ISS)","International Space Station (ISS)"],["국제우주정거장","Space Station"],["지금 이 순간 지구를 돌고 있는 위치","Where it is orbiting right now"],["현재 위치","Current position"],["실시간 계산","Computed live"],["고도","Altitude"],["속도","Speed"],["햇빛","Sunlight"],["햇빛 받는 중","In sunlight"],["지구 그림자 속","In Earth's shadow"],["지구 한 바퀴","One orbit"],["약 92분","about 92 min"],["최대 높이","Max elevation"],["맨눈 관측","Naked eye"],["가능 (어두운 하늘 + 햇빛 받는 ISS)","Yes (dark sky + sunlit ISS)"],["어려움 (낮이거나 ISS가 그림자 속)","Unlikely (daylight or ISS in shadow)"],["더 보기","More"],["ISS 실시간 영상","ISS live video"],["NASA 관측 안내","NASA Spot the Station"],["궤도 데이터를 받지 못해 계산할 수 없어요.","No orbit data to compute this."],["바다 위","over the ocean"],
+["현재 강도","Current strength"],["최대 풍속","Max wind"],["강도","strength"],["현재 위치","Current position"],["발생~최근 관측","First seen ~ latest"],["영향 지역","Affected"],["육지 영향 없음","No land affected"],["경로","Track"],["지나온 길(분홍)","Past track (pink)"],["예상 진로(점선)","Forecast (dashed)"],["정보 없음","No info"],["GDACS 상세 보고서","GDACS report"],["강도 구분은 최대 풍속을 기준으로 한 대략적인 분류예요. 정확한 예보는 각국 기상청 발표를 확인하세요.","Strength classes are rough, based on max wind. Check national weather agencies for official forecasts."],["열대저압부","Tropical depression"],["열대폭풍","Tropical storm"],["태풍","Typhoon"],["허리케인","Hurricane"],["사이클론","Cyclone"],["북서태평양","Northwest Pacific"],["대서양·동태평양","Atlantic · East Pacific"],["인도양·남반구","Indian Ocean · Southern Hemisphere"],["열대 저기압","Tropical low"],["초강력","Super"],["매우 강함","Very strong"],["강함","Strong"],["중간","Moderate"],["약함","Weak"],["약함 (저기압)","Weak (low)"],
+["이 지점","This spot"],["오로라가 보일 가능성 (하늘이 어둡고 맑을 때)","Chance of seeing aurora (with dark, clear skies)"],["지자기 활동","Geomagnetic activity"],["Kp 지수","Kp index"],["북반구","Northern Hemisphere"],["남반구","Southern Hemisphere"],["Kp 지수가 높을수록 오로라가 더 낮은 위도까지 내려와요. 한국(북위 33~38°)에서 보이는 일은 매우 드물어요.","The higher the Kp, the farther from the poles the aurora reaches. It's very rare in Korea (33–38°N)."],["조용","Quiet"],["활발","Active"],["G1 약한 폭풍","G1 minor storm"],["G2 중간 폭풍","G2 moderate storm"],["G3 강한 폭풍","G3 strong storm"],["G4 매우 강한 폭풍","G4 severe storm"],["G5 극한 폭풍","G5 extreme storm"],["극권 밤하늘","polar night sky"],["부근 하늘","nearby sky"],
+["두 나라 한눈에 비교","Two countries side by side"],["지금 시각","Time now"],["현지","Local"],["낮/밤","Day/Night"],["낮","Day"],["밤","Night"],["해질녘·새벽","Twilight"],["시차","Time difference"],["거리와 이동","Distance & travel"],["비행시간 (직항 가정)","Flight time (nonstop, est.)"],["기온","Temperature"],["하늘","Sky"],["다시 고르기","Pick again"],["와(과) 다른 나라 비교","with another country"],["와(과) 비교할 나라를 누르거나 검색하세요","— tap or search a country to compare"],["취소","Cancel"],["닫기","Close"],
+["대기질","air quality"],["초미세먼지 PM2.5","Fine dust PM2.5"],["초미세먼지","PM2.5"],["미세먼지 PM2.5","PM2.5"],["미세먼지 PM10","PM10"],["미국 AQI","US AQI"],["좋음","Good"],["보통","Moderate"],["나쁨","Unhealthy"],["매우 나쁨","Very unhealthy"],["국내 주요 도시","Major Korean cities"],["등급은 환경부 PM2.5 기준이에요: 좋음 0~15 · 보통 16~35 · 나쁨 36~75 · 매우 나쁨 76 이상. 모델 예측값이라 측정소 값과 다를 수 있어요.","Grades use Korea's PM2.5 scale: Good 0–15 · Moderate 16–35 · Unhealthy 36–75 · Very unhealthy 76+. These are model estimates and may differ from monitoring stations."],
+["최근 분화 기록","Latest eruption record"],["경보 단계","Alert level"],["적색 경보","Red alert"],["주황 경보","Orange alert"],["녹색","Green"],["GDACS가 최근 120일 안에 기록한 분화예요. 지금도 분화 중인지는 각국 화산 관측 기관 발표를 확인하세요.","Eruptions recorded by GDACS in the last 120 days. Check national volcano observatories for current activity."],["최근 분화","last eruption"],
+["지금 비행 중","In flight now"],["등록 국가","Registered in"],["고도 정보 없음","No altitude"],["고도 약","Altitude about"],["방향","Heading"],["상승/하강","Climb/descent"],["수평 비행","Level flight"],["상승","Climbing"],["하강","Descending"],["북","N"],["북동","NE"],["동","E"],["남동","SE"],["남","S"],["남서","SW"],["서","W"],["북서","NW"],["OpenSky의 무료 데이터예요. 하루 조회 횟수에 제한이 있어서, 지금 보고 있는 지역 주변만 45초마다 불러와요. 고도는 눈에 띄게 과장해서 표시했어요.","Free OpenSky data with a daily limit, so only the area you're viewing is loaded every 45 seconds. Altitude is exaggerated for visibility."],["항공편 데이터를 지금 받을 수 없어요. 무료 조회 한도에 걸렸거나 연결 문제일 수 있어요.","Flight data is unavailable right now. The free limit may be reached, or there's a connection problem."],
+["지금 달","The Moon now"],["밝게 빛나는 면적","Illuminated"],["월령","age"],["다음 보름달","Next full moon"],["다음 삭(그믐)","Next new moon"],["달 바로 아래","Directly below"],["떠 있음","Up"],["지평선 위","above horizon"],["지평선 아래","Below the horizon"],["다가오는 일식·월식","Upcoming eclipses"],["금환일식","Annular solar eclipse"],["개기일식","Total solar eclipse"],["반영월식","Penumbral lunar eclipse"],["부분월식","Partial lunar eclipse"],["개기월식","Total lunar eclipse"],["날짜는 세계시(UTC) 기준이에요. 보이는 지역은 일식·월식마다 달라요. 화면 속 달은 실제 방향에 있지만 거리와 크기는 보기 좋게 줄였어요.","Dates are in UTC. Visibility varies by eclipse. The Moon on screen points the real way, but distance and size are scaled down."],["NASA 일식·월식 안내","NASA eclipse guide"],["차오르는 중","waxing"],["기우는 중","waning"],["삭 (그믐 직후)","New moon"],["초승달","Waxing crescent"],["상현달","First quarter"],["차오르는 달","Waxing gibbous"],["보름달","Full moon"],["기우는 달","Waning gibbous"],["하현달","Last quarter"],["그믐달","Waning crescent"],["밝기","lit"],
+["장면","Scenes"],["해 뜨는 곳","Sunrise"],["서울","Seoul"],["가장 큰 지진","Biggest quake"],["오로라","Aurora"],["우주정거장","Space Station"],["해 지는 곳","Sunset"],["배경음악 · 효과음","Music · sound effects"],["▶ 투어 보기","▶ Watch tour"],["● 세로 영상으로 저장 (9:16 · 숏폼)","● Save vertical video (9:16 · shorts)"],["● 가로 영상으로 저장 (16:9)","● Save horizontal video (16:9)"],["지구를 자동으로 날아다니며 지금 일어나는 일을 보여줘요. 체크한 장면만 순서대로 나와요.","Flies around the globe showing what's happening now. Only checked scenes are shown, in order."],["나라 추가 (서울 다음에 나와요, 최대 8개)","Add countries (shown after Seoul, up to 8)"],["투어에 넣을 나라 검색","Search a country to add"],["영상은 투어 한 바퀴(1~2분)가 끝나면 자동으로 만들어져요. 중간에 화면을 누르면 그때까지 저장돼요. 녹화 중에는 화면을 끄거나 다른 앱으로 넘어가지 마세요.","The video is created after one loop (1–2 min). Tap the screen to stop early and save. Don't lock the screen or switch apps while recording."],["이 브라우저는 화면 녹화 저장을 지원하지 않아요. 보기만 할 수 있어요.","This browser can't save recordings. You can still watch."],["화면을 누르면 투어가 끝나요","Tap the screen to end the tour"],["· 화면을 누르면 저장","· tap to save"],
+["지금 이 순간, 살아 있는 지구","The living Earth, right now"],["지금 해가 뜨는 곳","Where the sun is rising now"],["지금 해가 지는 곳","Where the sun is setting now"],["새벽이 밝아오는 바다 위","Dawn breaking over the ocean"],["노을이 지는 바다 위","Sunset over the ocean"],["시속","speed"],
+["영상이 만들어졌어요","Your video is ready"],["공유 · 사진에 저장","Share · Save to Photos"],["파일로 내려받기","Download file"],["세로 9:16","Vertical 9:16"],["가로 16:9","Horizontal 16:9"],["이 브라우저는 WebM으로 저장돼요. 인스타그램 등에 올릴 땐 MP4 변환이 필요할 수 있어요.","This browser saves WebM. You may need to convert to MP4 for Instagram and similar apps."],["영상이 만들어지지 않았어요. 이 브라우저에서는 녹화가 안 될 수 있어요.","No video was created. Recording may not work in this browser."],
+["1년 지진 타임랩스","One-year earthquake timelapse"],["1년 타임랩스","1-year timelapse"],["지난 1년 동안의 규모 5 이상 지진을 약 45초 동안 차례로 보여줘요. 계절에 따라 낮밤 경계가 기우는 모습도 함께 보여요.","Shows every M5+ earthquake of the past year in about 45 seconds, with the day-night line tilting through the seasons."],["▶ 타임랩스 보기","▶ Watch timelapse"],["● 세로 영상 저장","● Save vertical video"],["● 가로 영상 저장","● Save horizontal video"],["규모 5 이상 지진","M5+ quakes"],["지난 1년","Past year"],["지진 기록을 아직 받지 못했어요. 잠시 뒤 다시 시도해 주세요.","Earthquake records aren't ready yet. Try again shortly."],
+["내 하늘","My sky"],["지금","Now"],["이 기기 시각","Device time"],["우주정거장 다음 통과","Next ISS pass"],["48시간 안에는 없음","None in 48 hours"],["오로라 확률","Aurora chance"],["지금 보이는 행성","Planets visible now"],["해가 진 뒤에 보여요","Visible after sunset"],["없음","None"],["설정","Settings"],["위치 다시 찾기","Locate again"],["기준을 서울로 되돌리기","Use Seoul as reference"],["내 위치는 이 기기에만 저장되고 어디로도 보내지지 않아요. 날씨와 미세먼지를 받을 때만 대략적인 좌표가 Open-Meteo로 전달돼요. 거리·시차·우주정거장 통과 계산이 내 위치 기준으로 바뀌어요.","Your location is stored only on this device. Approximate coordinates are sent to Open-Meteo only to fetch weather and air quality. Distances and ISS passes now use your location."],["이 브라우저는 위치 찾기를 지원하지 않아요.","This browser can't find your location."],["위치 권한이 꺼져 있어요. 브라우저 설정에서 이 사이트의 위치 접근을 허용해 주세요.","Location permission is off. Allow location access for this site in your browser settings."],["위치를 찾지 못했어요. 잠시 뒤 다시 시도해 주세요.","Couldn't find your location. Please try again."],["맨눈 관측 가능","visible to the naked eye"],
+["행성 · 지금 하늘에서의 위치","Planet · position in the sky now"],["지금 맨눈으로 볼 수 있어요","Visible to the naked eye now"],["하늘에 떠 있지만 지금은 낮이라 안 보여요","Above the horizon, but it's daytime"],["지금은 볼 수 없어요","Not visible now"],["적경 · 적위","RA · Dec"],["수성","Mercury"],["금성","Venus"],["화성","Mars"],["목성","Jupiter"],["토성","Saturn"],["해에 가장 가까운 행성이에요. 해 뜨기 직전이나 해 진 직후 낮은 하늘에서만 잠깐 보여요.","The planet closest to the Sun. Briefly visible low in the sky just before sunrise or after sunset."],["밤하늘에서 달 다음으로 가장 밝은 천체예요. '샛별', '개밥바라기'로 불려요.","The brightest object in the night sky after the Moon, known as the morning and evening star."],["붉은빛으로 구별하기 쉬운 행성이에요.","Easy to spot by its reddish color."],["가장 큰 행성이에요. 쌍안경으로 큰 위성 4개가 보여요.","The largest planet. Binoculars show its four big moons."],["작은 망원경으로도 고리가 보여요.","Even a small telescope shows its rings."],["위치는 근사 계산이라 1° 안팎 차이가 날 수 있어요.","Positions are approximate, within about 1°."],
+["지금 위치","Position now"],["스타링크 인터넷 위성","Starlink internet satellite"],["우주정거장·유인 우주선","Space station · crewed craft"],["허블 우주망원경","Hubble Space Telescope"],["스페이스X가 띄운 위성 인터넷용 위성이에요. 수천 기가 낮은 궤도를 촘촘히 돌고 있어요.","SpaceX satellites for internet service. Thousands fill low Earth orbit."],["1990년에 발사된 우주망원경이에요. 약 95분에 한 바퀴씩 돌아요.","A space telescope launched in 1990. It circles the Earth about every 95 minutes."],["사람이 머무는 우주정거장이나 그와 함께 움직이는 우주선이에요. 중국 톈궁(CSS)도 여기 들어 있어요.","Crewed space stations and the craft docked with them, including China's Tiangong (CSS)."],["궤도 요소 출처: Celestrak","Orbit data: Celestrak"],["위성 데이터를 아직 받지 못했어요. 잠시 뒤 다시 눌러 주세요.","Satellite data isn't ready yet. Try again shortly."],["위성 위치 계산을 시작하지 못했어요.","Couldn't start satellite calculations."],["바람 데이터를 아직 받지 못했어요. 잠시 뒤 다시 눌러 주세요.","Wind data isn't ready yet. Try again shortly."],
+["산불 감지","Fire detections"],["최근 24시간","Last 24 hours"],["이 근처(약 50km 칸)에서 위성이 감지한 불","Fires detected by satellite in this ~50 km cell"],["열 방출량 합계","Total fire radiative power"],["VIIRS 위성이 감지한 뜨거운 지점이라 산불뿐 아니라 농경지 소각, 공장 열원도 섞여 있을 수 있어요.","These are VIIRS hot spots, which can include crop burning and industrial heat as well as wildfires."],["산불 레이어는 NASA FIRMS 무료 키가 있어야 켜져요. 키를 저장소 Secrets에 FIRMS_KEY로 넣으면 다음 업데이트부터 보여요.","The wildfire layer needs a free NASA FIRMS key. Add it to the repository secrets as FIRMS_KEY and it appears from the next update."],["바다·섬","Sea or island"],
+["이 기기에서는 3D(WebGL)를 켤 수 없어요.","3D (WebGL) isn't available on this device."],["지구 이미지를 불러오지 못했어요. 새로고침해 주세요.","Couldn't load the Earth images. Please refresh."],["이 지역의 상세 정보가 없어요.","No details for this area."],["수도","Capital"],
+["실제 위성 구름","Real satellite clouds"],["업데이트","updated"],["위치는 매 순간 계산","position computed live"],["궤도 요소(TLE)","Orbit elements (TLE)"],["NOAA 예보","NOAA forecast"],["태양 직하점","Subsolar point"],["오로라 Kp","Aurora Kp"],["화면 속","on screen"],["(영어)","(English)"],["(한국어)","(Korean)"],["내 위치에서","From my location"]
+];
+var I18N_MAP={},I18N_FRAG=[];
+I18N_PAIRS.forEach(function(p){I18N_MAP[p[0]]=p[1];I18N_FRAG.push(p)});I18N_FRAG.sort(function(a,b){return b[0].length-a[0].length});
+var I18N_RX=[
+ [/(\d{4})년 (\d+)월 (\d+)일/g,"$1-$2-$3"],[/(\d+)월 (\d+)일 기준/g,"as of $1/$2"],[/(\d+)월 (\d+)일/g,"$1/$2"],
+ [/한국보다 (.+?) (빠름|느림)/g,function(m,a,b){return a+(b==="빠름"?" ahead of":" behind")+" Korea"}],
+ [/^(.+?)가 (.+?) (빠름|느림)$/g,function(m,a,t,b){return a+" is "+t+(b==="빠름"?" ahead":" behind")}],
+ [/(\d+)시간 (\d+)분/g,"$1h $2m"],[/(\d+)분 전/g,"$1 min ago"],[/(\d+)시간 전/g,"$1h ago"],[/(\d+)일 전/g,"$1d ago"],[/(\d+)초 전/g,"$1s ago"],[/(\d+)분 동안/g,"for $1 min"],[/(\d+)시간/g,"$1h"],[/(\d+)분/g,"$1 min"],
+ [/^(.+?)에서 (.+?)까지$/g,"From $1 to $2"],[/^(.+?)에서$/g,"From $1"],[/^(.+?)에서 다음에 보이는 때$/g,"Next pass over $1"],[/^(.+?) 하늘$/g,"$1 sky"],
+ [/^(.+?) 상공$/g,"over $1"],[/(.+?) 상공 · /g,"over $1 · "],[/^(.+?) 대기질$/g,"$1 air quality"],[/^(.+?) 지금 날씨$/g,"$1 weather now"],
+ [/^더 많은 (.+?) 기사$/g,"More $1 news"],[/^(.+?) 최신 기사$/g,"Latest $1 news"],[/^(.+?) 국가\(國歌\) 듣기$/g,"$1 national anthem"],[/^(.+?) 대표곡 듣기$/g,"Popular songs from $1"],[/^(.+?) 패션 매거진$/g,"$1 fashion magazines"],[/^(.+?) 여행 기사$/g,"$1 travel stories"],
+ [/^(.+?)와\(과\) 비교할 나라를 누르거나 검색하세요$/g,"Tap or search a country to compare with $1"],[/^(.+?)와\(과\) 다른 나라 비교$/g,"Compare $1 with another country"],
+ [/^(.+?) 면적은 (.+?)의 약? ?([\d.,]+)(배|%)예요\.$/g,function(m,a,b,n,u){return a+" is "+(u==="배"?n+"× ":"about "+n+"% of ")+(u==="배"?"the size of ":"the size of ")+b+"."}],
+ [/규모 ([\d.]+) 지진/g,"M$1 earthquake"],[/FlightAware에서 /g,"FlightAware: "],[/· (.+?) 기준$/g,"· $1 time"],[/^원화 기준 /g,"In KRW · "],[/ · 최근 (\d+)영업일/g," · last $1 business days"],
+ [/약 ([\d,.]+)/g,"about $1"],[/([\d,]+)곳/g,"$1 spots"],[/([\d,]+)회/g,"$1"],[/북위 ([\d.]+)°까지/g,"down to $1°N"],[/남위 ([\d.]+)°까지/g,"up to $1°S"],[/월령 ([\d.]+)일/g,"age $1 days"],[/([\d,.]+)원/g,"₩$1"],[/ \(한국 시간\) 기록/g," (Korea time)"],[/(.+?) 시작 · /g,"starts $1 · "],
+ [/지평선 위 (\d+)°/g,"$1° above horizon"],[/1달러 ([\d,]+)원/g,"$1 KRW per USD"]
+];
+function tr(s){
+  if(LANG!=="en"||!s||!HANGUL.test(s))return s;
+  var k=s.trim();if(I18N_MAP[k]!=null)return s.replace(k,I18N_MAP[k]);
+  var o=s;for(var i=0;i<I18N_RX.length;i++)o=o.replace(I18N_RX[i][0],I18N_RX[i][1]);
+  if(!HANGUL.test(o))return o;
+  for(var j=0;j<I18N_FRAG.length;j++){var f=I18N_FRAG[j];if(o.indexOf(f[0])>=0)o=o.split(f[0]).join(f[1])}
+  return o.replace(/(\d)곳/g,"$1").replace(/(\d)회/g,"$1");
+}
+function T(s){return tr(s)}
+if(LANG==="en"){
+  Object.keys(COUNTRIES).forEach(function(k){COUNTRIES[k].ko=COUNTRIES[k].en});
+  var done=new WeakMap();
+  var fixNode=function(n){if(n.nodeType===3){var v=n.data;if(HANGUL.test(v)&&done.get(n)!==v){var t=tr(v);done.set(n,t);if(t!==v)n.data=t}}else if(n.nodeType===1){["placeholder","title","aria-label"].forEach(function(a){var v=n.getAttribute&&n.getAttribute(a);if(v&&HANGUL.test(v)){var t2=tr(v);if(t2!==v)n.setAttribute(a,t2)}});for(var c=n.firstChild;c;c=c.nextSibling)fixNode(c)}};
+  fixNode(document.body);document.title=tr(document.title);document.documentElement.lang="en";
+  new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==="characterData")fixNode(m.target);else if(m.type==="attributes")fixNode(m.target);else m.addedNodes.forEach(fixNode)})}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["placeholder","title","aria-label"]});
+}
+
 var $=function(id){return document.getElementById(id)};
 var stage=$("stage"), panel=$("panel");
 var reduceMotion=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -437,8 +532,8 @@ var clouds=new THREE.Mesh(new THREE.SphereGeometry(1.008,128,64),cloudMat);cloud
   sp.scale.setScalar(46);scene.add(sp);window.__sun=sp;
 })();
 
-/* 별 */
-(function(){
+/* 별 (별 데이터가 없을 때만 무작위 별) */
+if(!window.SKY)(function(){
   var n=2600,pos=new Float32Array(n*3),col=new Float32Array(n*3);
   for(var i=0;i<n;i++){
     var u=Math.random()*2-1,t=Math.random()*Math.PI*2,s=Math.sqrt(1-u*u),r=120;
@@ -476,8 +571,8 @@ selGlow.scale.setScalar(1.002);selLines.renderOrder=selGlow.renderOrder=3;scene.
 var arc=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffd9a0,transparent:true,opacity:0.95,depthWrite:false}));arc.renderOrder=4;scene.add(arc);
 var SEOUL={lat:37.57,lng:126.98};
 function arcTo(c,from){
-  arc.geometry.dispose();var o=from||SEOUL;
-  if(!c||c.lat==null||(!from&&c.a2==="KR")){arc.geometry=new THREE.BufferGeometry();return null}
+  arc.geometry.dispose();var o=from||ORIGIN;
+  if(!c||c.lat==null||(!from&&!ORIGIN.me&&c.a2==="KR")){arc.geometry=new THREE.BufferGeometry();return null}
   var a=ll2v(o.lat,o.lng,1),b=ll2v(c.lat,c.lng,1),ang=a.angleTo(b),n=72,pts=new Float32Array((n+1)*3),v=new THREE.Vector3();
   var h=Math.min(0.2,0.02+ang*0.07),sn=Math.sin(ang)||1;
   for(var i=0;i<=n;i++){var u=i/n;
@@ -547,7 +642,7 @@ stage.addEventListener("pointerup",up);stage.addEventListener("pointercancel",up
 stage.addEventListener("wheel",function(e){e.preventDefault();cam.dist=1+(cam.dist-1)*Math.exp(e.deltaY*0.0012);clampCam();lastTouch=performance.now()},{passive:false});
 
 var ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),sphere=new THREE.Sphere(new THREE.Vector3(),1),hit=new THREE.Vector3();
-var tmpV=new THREE.Vector3(),tmpD=new THREE.Vector3();
+var tmpV=new THREE.Vector3(),tmpD=new THREE.Vector3(),tmpS=new THREE.Vector3();
 function hidden(v){ // 카메라에서 v까지 가는 선이 지구에 먼저 부딪히면 가려진 것
   var d=tmpD.copy(v).sub(camera.position),L=d.length();d.divideScalar(L);
   var b=camera.position.dot(d),disc=b*b-(camera.position.lengthSq()-1);
@@ -560,7 +655,9 @@ function screenDist(v,x,y,r){
 }
 function pick(x,y){
   var r=renderer.domElement.getBoundingClientRect();
+  if(meSprite.visible&&screenDist(meSprite.position,x,y,r)<24){openMe();return}
   if(issGroup.visible&&issPos&&screenDist(issSprite.position,x,y,r)<30){openISS();return}
+  if(satPts.visible&&SAT.cur){var bs=-1,bsd=12;for(var si2=0;si2<SAT.n;si2++){tmpS.set(SAT.pos[si2*3],SAT.pos[si2*3+1],SAT.pos[si2*3+2]);var dd=screenDist(tmpS,x,y,r)-(SAT.grp[si2]==="starlink"?0:6);if(dd<bsd){bsd=dd;bs=si2}}if(bs>=0){openSat(bs);return}}
   if(moonMesh.visible){var mr=MOON_R/camera.position.distanceTo(moonMesh.position)*(r.height/2)/Math.tan(camera.fov*D2R/2);if(screenDist(moonMesh.position,x,y,r)<Math.max(22,mr*1.1)){openMoon();return}}
   if(volcGroup.visible){for(var vi=0;vi<VOLC.length;vi++){if(screenDist(VOLC[vi].v,x,y,r)<28){openVolcano(VOLC[vi]);return}}}
   if(flightOn&&FL.length){var bf=null,bfd=16;FL.forEach(function(f){var d=screenDist(f.v,x,y,r);if(d<bfd){bfd=d;bf=f}});if(bf){openFlight(bf);return}}
@@ -571,8 +668,9 @@ function pick(x,y){
     if(best){openQuake(best);return}
   }
   ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
-  if(!ray.ray.intersectSphere(sphere,hit))return;
+  if(!ray.ray.intersectSphere(sphere,hit)){for(var pi=0;pi<PLANETS.length;pi++){var P_=PLANETS[pi];P_.sp.getWorldPosition(P_.wp);if(screenDist(P_.wp,x,y,r)<22){openPlanet(P_);return}}return}
   var lat=Math.asin(Math.max(-1,Math.min(1,hit.y)))*R2D,lon=Math.atan2(-hit.z,hit.x)*R2D;
+  if(firePts.visible&&FIRES){var bfi=null,bfid=14;FIRES.cells.forEach(function(c){var d=screenDist(c.v,x,y,r);if(d<bfid){bfid=d;bfi=c}});if(bfi){openFire(bfi);return}}
   if(airPts.visible&&AIR){var ba=null,bad=16;AIR.items.forEach(function(it){var d=screenDist(it.v,x,y,r);if(d<bad){bad=d;ba=it}});if(ba){openAir(ba);return}}
   if(aurora.visible&&AUR&&!cmpBase){var av=aurAt(lat,lon);if(av>=15&&ll2v(lat,lon,1).dot(sunDir)<0.15){openAurora(lat,lon,av);return}}
   var f=findCountry(lat,lon);if(f)select(f,true);
@@ -582,7 +680,7 @@ function pick(x,y){
 var SNAP=window.SNAPSHOT||{rates:null,ratesAt:null};
 var rates=SNAP.rates,ratesLive=false,ratesAt=SNAP.ratesAt,wxBlocked=false,current=null,wxCache={};
 var curNames=null,nf=function(v,d){return v.toLocaleString("ko-KR",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:0})};
-try{curNames=new Intl.DisplayNames(["ko"],{type:"currency"})}catch(_){}
+try{curNames=new Intl.DisplayNames([LANG],{type:"currency"})}catch(_){}
 function curName(c){try{return curNames?curNames.of(c):c}catch(_){return c}}
 function timeout(ms){if(window.AbortController){var a=new AbortController();setTimeout(function(){a.abort()},ms);return a.signal}}
 function getJSON(u){return fetch(u,{signal:timeout(7000)}).then(function(r){if(!r.ok)throw 0;return r.json()})}
@@ -651,7 +749,7 @@ function renderWx(c){
 }
 
 var REG={Asia:"아시아",Europe:"유럽",Africa:"아프리카",Americas:"아메리카",Oceania:"오세아니아",Antarctic:"남극"},langNames=null;
-try{langNames=new Intl.DisplayNames(["ko"],{type:"language"})}catch(_){}
+try{langNames=new Intl.DisplayNames([LANG],{type:"language"})}catch(_){}
 function tzOff(tz){
   try{var d=new Date(),o={};
     new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(d).forEach(function(x){o[x.type]=+x.value});
@@ -667,7 +765,7 @@ function renderInfo(c,km){
   if(c.lg&&c.lg.length)box.appendChild(row("언어",c.lg.map(function(l){var n=null;try{n=langNames&&langNames.of(l[0])}catch(_){}return (n&&n!==l[0])?n:l[1]}).join(", ")));
   if(c.tz&&c.a2!=="KR"){var a=tzOff(c.tz),b=tzOff("Asia/Seoul");
     if(a!=null&&b!=null){var d=a-b;box.appendChild(row("한국과 시차",d===0?"같은 시간":"한국보다 "+hm(Math.abs(d))+(d>0?" 빠름":" 느림")))}}
-  if(km!=null)box.appendChild(row("서울에서 "+(c.cap||"수도")+"까지","약 "+nf(Math.round(km/10)*10,0)+" km"));
+  if(km!=null)box.appendChild(row(ORIGIN.name+"에서 "+(c.cap||"수도")+"까지","약 "+nf(Math.round(km/10)*10,0)+" km"));
 }
 
 var NEWS=null;
@@ -685,7 +783,7 @@ getJSON("data/news.json?v="+Math.floor(Date.now()/600000)).then(function(j){
 }).catch(function(){});
 function renderNews(c,name,en){
   var box=$("p-news"),chip=$("news-chip");box.textContent="";
-  var list=NEWS&&c&&NEWS.items[c.a2];
+  var list=LANG==="en"?null:(NEWS&&c&&NEWS.items[c.a2]);
   if(list&&list.length){
     chip.className="chip live";chip.textContent=ago(NEWS.updatedAt)+" 업데이트";
     box.className="news";
@@ -706,8 +804,8 @@ function tickPanel(){
   if(!current)return;var c=current.c,now=new Date();
   if(c&&c.tz){
     try{
-      $("p-time").textContent=new Intl.DateTimeFormat("ko-KR",{timeZone:c.tz,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);
-      $("p-date").textContent=new Intl.DateTimeFormat("ko-KR",{timeZone:c.tz,year:"numeric",month:"long",day:"numeric",weekday:"long"}).format(now)+" · "+(c.cap||"")+" 기준";
+      $("p-time").textContent=new Intl.DateTimeFormat(LOC,{timeZone:c.tz,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);
+      $("p-date").textContent=new Intl.DateTimeFormat(LOC,{timeZone:c.tz,year:"numeric",month:"long",day:"numeric",weekday:"long"}).format(now)+" · "+(c.cap||"")+" 기준";
     }catch(_){$("p-time").textContent="--:--:--";$("p-date").textContent=""}
   }else{$("p-time").textContent="--:--:--";$("p-date").textContent="표준 시간대 정보가 없어요."}
   var sky=$("p-sky");
@@ -721,7 +819,7 @@ function tickPanel(){
 function select(f,fly){
   var c=COUNTRIES[f.id]||null,name=c?c.ko:f.properties.name,en=c?c.en:f.properties.name;
   if(cmpBase&&c&&c.a2!==cmpBase.a2){var base=cmpBase;cmpBase=null;$("toast").hidden=true;openCompare(base,c,f);return}
-  $("cmp").hidden=!c;$("p-flag").style.fontSize="";
+  $("cmp").hidden=!c;$("p-flag").style.fontSize="";setTimeout(updFavBtn,0);
   current={f:f,c:c};alt=null;$("alt").hidden=true;$("cty").hidden=false;
   $("p-flag").textContent=c?c.flag:"";$("p-name").textContent=name;
   $("p-sub").textContent=en+(c&&c.cap?" · 수도 "+c.cap:"");
@@ -788,7 +886,7 @@ $("quake-btn").addEventListener("click",function(){quakePts.visible=!quakePts.vi
 
 function openAlt(title,sub,dotClass,dotColor){
   current=null;$("cty").hidden=true;var a=$("alt");a.hidden=false;a.textContent="";
-  $("cmp").hidden=true;
+  $("cmp").hidden=true;$("fav").hidden=true;
   var f=$("p-flag");f.textContent="";f.style.fontSize="";var d=el("span","qdot"+(dotClass?" "+dotClass:""));if(dotColor)d.style.background="radial-gradient(circle,"+dotColor+" 0 34%,transparent 36%),radial-gradient(circle,"+dotColor+"55 0 70%,transparent 72%)";f.appendChild(d);
   $("p-name").textContent=title;$("p-sub").textContent=sub;
   selLines.geometry=selGlow.geometry=new THREE.BufferGeometry();arcTo(null);
@@ -800,7 +898,7 @@ function sec(parent,title,chip,chipLive){
   if(chip){var c=el("span","chip"+(chipLive?" live":""),chip);h.appendChild(c)}
   s.appendChild(h);parent.appendChild(s);return s;
 }
-function kst(ms,withDate){return new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:withDate?"long":undefined,day:withDate?"numeric":undefined,weekday:withDate?"short":undefined,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(ms))}
+function kst(ms,withDate){return new Intl.DateTimeFormat(LOC,{timeZone:"Asia/Seoul",month:withDate?"long":undefined,day:withDate?"numeric":undefined,weekday:withDate?"short":undefined,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(ms))}
 function landName(lat,lon){var f=findCountry(lat,lon);if(!f)return null;var c=COUNTRIES[f.id];return c?c.ko:f.properties.name}
 function openQuake(q){
   var col=q.mag>=6?"#ff3840":q.mag>=4.5?"#ff7a45":"#ffd159";
@@ -813,7 +911,7 @@ function openQuake(q){
   r.appendChild(row("깊이",nf(q.depth,1)+" km"+(q.depth<70?" · 얕음":q.depth<300?" · 중간":" · 깊음")));
   r.appendChild(row("위치",Math.abs(q.lat).toFixed(2)+"°"+(q.lat>=0?"N":"S")+" "+Math.abs(q.lon).toFixed(2)+"°"+(q.lon>=0?"E":"W")));
   var ln=landName(q.lat,q.lon);r.appendChild(row("지역",ln?ln+" 육지":"바다 또는 해안"));
-  var km=ll2v(SEOUL.lat,SEOUL.lng,1).angleTo(ll2v(q.lat,q.lon,1))*6371;r.appendChild(row("서울에서","약 "+nf(Math.round(km/10)*10,0)+" km"));
+  var km=kmFromOrigin(q.lat,q.lon);r.appendChild(row(ORIGIN.name+"에서","약 "+nf(Math.round(km/10)*10,0)+" km"));
   var s3=sec(a,"최근 지진 범례",quakeAt?"USGS · "+ago(quakeAt)+" 업데이트":"USGS",!!quakeAt&&Date.now()-new Date(quakeAt)<15*60000);
   var lg=el("div","legend");[["#ffd159","규모 2.5~4.4"],["#ff7a45","4.5~5.9"],["#ff3840","6.0 이상"]].forEach(function(x){var sp=el("span");var i=el("i");i.style.background=x[0];sp.appendChild(i);sp.appendChild(document.createTextNode(x[1]));lg.appendChild(sp)});
   s3.appendChild(lg);s3.appendChild(el("div","note","6시간 안에 일어난 지진은 크게, 퍼지는 고리로 표시돼요."));
@@ -860,9 +958,10 @@ function pollIss(){ // TLE가 없을 때: 위치 API를 직접 조회
 getJSON("data/iss.json?v="+Math.floor(Date.now()/3600000)).then(function(j){if(!useTle(j))throw 0}).catch(function(){pollIss();setInterval(function(){if(!satrec)pollIss()},5000)});
 $("iss-btn").addEventListener("click",function(){issGroup.visible=!issGroup.visible;this.setAttribute("aria-pressed",issGroup.visible?"true":"false")});
 
-function nextSeoulPass(ms){
+function nextSeoulPass(ms){return nextPass(ms,ORIGIN)}
+function nextPass(ms,o){
   if(!satrec||!SATJS)return null;
-  var obs={latitude:SEOUL.lat*D2R,longitude:SEOUL.lng*D2R,height:0.03},pass=null;
+  var obs={latitude:o.lat*D2R,longitude:o.lng*D2R,height:0.03},pass=null;
   for(var t=ms;t<ms+48*3600e3;t+=20000){
     var d=new Date(t),pv=SATJS.propagate(satrec,d);if(!pv||!pv.position||typeof pv.position==="boolean")continue;
     var gm=SATJS.gstime(d),la=SATJS.ecfToLookAngles(obs,SATJS.eciToEcf(pv.position,gm)),el_=la.elevation*R2D;
@@ -873,7 +972,7 @@ function nextSeoulPass(ms){
   }
   if(!pass)return null;
   var sp=issAt(pass.maxT),sun=sunLL(pass.maxT),sd=ll2v(sun.lat,sun.lon,1);
-  var sunAltSeoul=Math.asin(ll2v(SEOUL.lat,SEOUL.lng,1).dot(sd))*R2D;
+  var sunAltSeoul=Math.asin(ll2v(o.lat,o.lng,1).dot(sd))*R2D;
   pass.visible=sunAltSeoul<-6&&sp&&issSunlit(sp.v,sd);
   return pass;
 }
@@ -884,14 +983,14 @@ function openISS(){
   var s1=sec(a,"현재 위치",satrec?"실시간 계산":"실시간",true);
   s1.appendChild(el("div","big txt")).id="iss-over";s1.appendChild(el("div","sub")).id="iss-ll";
   var r=el("div","rows");r.id="iss-rows";r.style.marginTop="6px";s1.appendChild(r);
-  var s2=sec(a,"서울에서 다음에 보이는 때");
+  var s2=sec(a,ORIGIN.name+"에서 다음에 보이는 때");
   var p=nextSeoulPass(Date.now());
   if(p){
     s2.appendChild(el("div","big",kst(p.start)));
     s2.appendChild(el("div","sub",kst(p.start,true)+" 시작 · 약 "+Math.max(1,Math.round(((p.end||p.start)-p.start)/60000))+"분 동안"));
     var r2=el("div","rows");r2.style.marginTop="6px";r2.appendChild(row("최대 높이","지평선 위 "+Math.round(p.max)+"°"));
     r2.appendChild(row("맨눈 관측",p.visible?"가능 (어두운 하늘 + 햇빛 받는 ISS)":"어려움 (낮이거나 ISS가 그림자 속)"));s2.appendChild(r2);
-  }else s2.appendChild(el("div","note",satrec?"앞으로 48시간 안에는 서울 하늘(고도 10° 이상)을 지나지 않아요.":"궤도 데이터를 받지 못해 계산할 수 없어요."));
+  }else s2.appendChild(el("div","note",satrec?"앞으로 48시간 안에는 "+ORIGIN.name+" 하늘(고도 10° 이상)을 지나지 않아요.":"궤도 데이터를 받지 못해 계산할 수 없어요."));
   var s3=sec(a,"더 보기"),l=el("div","links");
   l.appendChild(link("ISS 실시간 영상","https://www.youtube.com/results?search_query="+encodeURIComponent("ISS live stream earth")));
   l.appendChild(link("NASA 관측 안내","https://spotthestation.nasa.gov/"));s3.appendChild(l);
@@ -913,7 +1012,8 @@ function tickISS(){
 var BYA2={};Object.keys(COUNTRIES).forEach(function(k){BYA2[COUNTRIES[k].a2]=COUNTRIES[k]});
 function fly(lon,lat){if(reduceMotion){cam.lon=lon;cam.lat=Math.max(-70,Math.min(70,lat));clampCam()}else target={lon:lon,lat:Math.max(-70,Math.min(70,lat))}}
 function llText(lat,lon){return Math.abs(lat).toFixed(1)+"°"+(lat>=0?"N":"S")+" "+Math.abs(lon).toFixed(1)+"°"+(lon>=0?"E":"W")}
-function kmFromSeoul(lat,lon){return ll2v(SEOUL.lat,SEOUL.lng,1).angleTo(ll2v(lat,lon,1))*6371}
+function kmFromOrigin(lat,lon){return ll2v(ORIGIN.lat,ORIGIN.lng,1).angleTo(ll2v(lat,lon,1))*6371}
+var kmFromSeoul=kmFromOrigin;
 
 /* ---------- 태풍 ---------- */
 var STORMS=[],stormAt=null,stormGroup=new THREE.Group();scene.add(stormGroup);
@@ -964,7 +1064,7 @@ function openStorm(sm){
   s1.appendChild(el("div","sub","최대 풍속 · 강도 "+stormGrade(sm.wind)));
   var s2=sec(a,"상세"),r=el("div","rows");s2.appendChild(r);
   r.appendChild(row("현재 위치",llText(sm.pos[1],sm.pos[0])));
-  r.appendChild(row("서울에서","약 "+nf(Math.round(kmFromSeoul(sm.pos[1],sm.pos[0])/10)*10,0)+" km"));
+  r.appendChild(row(ORIGIN.name+"에서","약 "+nf(Math.round(kmFromSeoul(sm.pos[1],sm.pos[0])/10)*10,0)+" km"));
   if(sm.from)r.appendChild(row("발생~최근 관측",dateK(sm.from)+" ~ "+dateK(sm.to)));
   var cs=(sm.countries||[]).map(function(a2){return BYA2[a2]?BYA2[a2].ko:a2});
   r.appendChild(row("영향 지역",cs.length?cs.join(", "):"육지 영향 없음"));
@@ -1049,7 +1149,7 @@ function cmpGrid(parent,A,B,rows){
   rows.forEach(function(r){g.appendChild(el("span",null,r[0]));var x=el("b",r[3]||null,r[1]);if(r[4])x.id=r[4];g.appendChild(x);var y=el("b",r[3]||null,r[2]);if(r[5])y.id=r[5];g.appendChild(y)});
   parent.appendChild(g);return g;
 }
-function hm24(tz){try{return new Intl.DateTimeFormat("ko-KR",{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date())}catch(_){return "-"}}
+function hm24(tz){try{return new Intl.DateTimeFormat(LOC,{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date())}catch(_){return "-"}}
 function openCompare(A,B,fB){
   alt={type:"cmp",A:A,B:B};
   var a=openAlt(A.ko+" vs "+B.ko,"두 나라 한눈에 비교");
@@ -1187,7 +1287,7 @@ function openVolcano(v){
   s1.appendChild(el("div","sub",kst(new Date((v.to||v.from)+"Z").getTime(),true)+" (한국 시간) 기록"));
   var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);
   r.appendChild(row("경보 단계",lv));r.appendChild(row("위치",llText(v.pos[1],v.pos[0])));
-  r.appendChild(row("서울에서","약 "+nf(Math.round(kmFromSeoul(v.pos[1],v.pos[0])/10)*10,0)+" km"));
+  r.appendChild(row(ORIGIN.name+"에서","약 "+nf(Math.round(kmFromSeoul(v.pos[1],v.pos[0])/10)*10,0)+" km"));
   s1.appendChild(el("div","note","GDACS가 최근 120일 안에 기록한 분화예요. 지금도 분화 중인지는 각국 화산 관측 기관 발표를 확인하세요."));
   var s2=sec(a,"더 보기"),l=el("div","links");l.appendChild(link("GDACS 상세 보고서",v.url));s2.appendChild(l);
   fly(v.pos[0],v.pos[1]);
@@ -1305,8 +1405,8 @@ function openMoon(){
   var nf_=nextPhase(Date.now(),180),nn=nextPhase(Date.now(),0);
   if(nf_)r.appendChild(row("다음 보름달",kst(nf_,true)));if(nn)r.appendChild(row("다음 삭(그믐)",kst(nn,true)));
   var ln=landName(mi.lat,mi.lon);r.appendChild(row("달 바로 아래",(ln||"바다")+" · "+llText(mi.lat,mi.lon)));
-  var altS=Math.asin(Math.max(-1,Math.min(1,ll2v(SEOUL.lat,SEOUL.lng,1).dot(ll2v(mi.lat,mi.lon,1)))))*R2D;
-  r.appendChild(row("서울 하늘",altS>0?"떠 있음 · 지평선 위 "+Math.round(altS)+"°":"지평선 아래"));
+  var altS=Math.asin(Math.max(-1,Math.min(1,ll2v(ORIGIN.lat,ORIGIN.lng,1).dot(ll2v(mi.lat,mi.lon,1)))))*R2D;
+  r.appendChild(row(ORIGIN.name+" 하늘",altS>0?"떠 있음 · 지평선 위 "+Math.round(altS)+"°":"지평선 아래"));
   var s2=sec(a,"다가오는 일식·월식"),r2=el("div","rows");s2.appendChild(r2);
   var today=new Date().toISOString().slice(0,10);
   ECLIPSES.filter(function(x){return x[0]>=today}).slice(0,4).forEach(function(x){var p=x[0].split("-");r2.appendChild(row(p[0]+"년 "+(+p[1])+"월 "+(+p[2])+"일",x[1]))});
@@ -1421,8 +1521,8 @@ function recFrame(dt){
   var goal=$("caption").classList.contains("show")?1:0;r.capA+=(goal-r.capA)*Math.min(1,dt*2.4);
   var SANS="'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif",MONO="'IBM Plex Mono',ui-monospace,monospace",pad=40;
   cx.save();cx.textBaseline="alphabetic";cx.shadowColor="rgba(0,0,0,.9)";cx.shadowBlur=18;
-  cx.globalAlpha=0.92;cx.fillStyle="#e9eef5";cx.font="600 26px "+SANS;cx.fillText("라이브 어스",pad,pad+26);
-  cx.fillStyle="#5ee08a";cx.font="500 17px "+MONO;cx.fillText("● LIVE  UTC "+new Date().toISOString().slice(11,16),pad,pad+56);
+  cx.globalAlpha=0.92;cx.fillStyle="#e9eef5";cx.font="600 26px "+SANS;cx.fillText(T("라이브 어스"),pad,pad+26);
+  cx.fillStyle="#5ee08a";cx.font="500 17px "+MONO;cx.fillText("● "+$("cap-l").textContent,pad,pad+56);
   if(r.capA>0.01){
     var off=(1-r.capA)*14,base=r.aspect==="v"?H-190:H-110,t=$("cap-t").textContent,s=$("cap-s").textContent;
     cx.globalAlpha=r.capA;cx.fillStyle="#ffffff";var ts=fitText(cx,t,W-pad*2,r.aspect==="v"?62:60,"600",SANS);cx.fillText(t,pad,base+off);
@@ -1503,7 +1603,7 @@ function startTour(mode){
   sfxWhoosh();
 }
 function stopTour(){
-  if(!tour)return;tour=null;hideCaption();document.body.classList.remove("touring");lookGoal.set(0,0,0);
+  if(!tour)return;var wasTL=!!tour.tl;tour=null;if(wasTL)endTimelapse();hideCaption();document.body.classList.remove("touring");lookGoal.set(0,0,0);
   lastTouch=performance.now();cam.vLon=cam.vLat=0;audioStop();if(rec)recStop();clampCam();
 }
 window.addEventListener("pointerdown",function(e){if(tour){stopTour();e.stopPropagation();e.preventDefault()}},true);
@@ -1560,6 +1660,312 @@ function tourUpdate(dt){
   $("tour-btn").addEventListener("click",function(e){e.stopPropagation();$("tsheet").hidden=false});
 })();
 
+/* ---------- 기준 위치 (서울 또는 내 위치) ---------- */
+var ORIGIN={lat:SEOUL.lat,lng:SEOUL.lng,name:"서울",me:false};
+try{var meS=JSON.parse(localStorage.getItem("le-me")||"null");if(meS&&meS.lat!=null)ORIGIN={lat:meS.lat,lng:meS.lng,name:"내 위치",me:true}}catch(_){}
+var meSprite=(function(){
+  var cv=document.createElement("canvas");cv.width=cv.height=128;var g=cv.getContext("2d");
+  var gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,"rgba(120,190,255,.9)");gr.addColorStop(.25,"rgba(80,160,255,.4)");gr.addColorStop(1,"rgba(80,160,255,0)");
+  g.fillStyle=gr;g.fillRect(0,0,128,128);g.beginPath();g.arc(64,64,15,0,7);g.fillStyle="#4aa8ff";g.fill();g.lineWidth=6;g.strokeStyle="#fff";g.stroke();
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false,depthTest:false}));sp.renderOrder=8;sp.visible=false;scene.add(sp);return sp;
+})();
+function placeMe(){if(ORIGIN.me){meSprite.position.copy(ll2v(ORIGIN.lat,ORIGIN.lng,1.006));meSprite.visible=true}else meSprite.visible=false}
+placeMe();
+function locateMe(){
+  if(!navigator.geolocation){notify("이 브라우저는 위치 찾기를 지원하지 않아요.");return}
+  $("me-btn").lastChild.textContent="찾는 중…";
+  navigator.geolocation.getCurrentPosition(function(p){
+    ORIGIN={lat:+p.coords.latitude.toFixed(3),lng:+p.coords.longitude.toFixed(3),name:"내 위치",me:true};
+    try{localStorage.setItem("le-me",JSON.stringify({lat:ORIGIN.lat,lng:ORIGIN.lng}))}catch(_){}
+    $("me-btn").lastChild.textContent="내 위치";placeMe();openMe();
+  },function(err){$("me-btn").lastChild.textContent="내 위치";notify(err&&err.code===1?"위치 권한이 꺼져 있어요. 브라우저 설정에서 이 사이트의 위치 접근을 허용해 주세요.":"위치를 찾지 못했어요. 잠시 뒤 다시 시도해 주세요.")},{enableHighAccuracy:false,timeout:12000,maximumAge:600000});
+}
+$("me-btn").addEventListener("click",function(){if(ORIGIN.me)openMe();else locateMe()});
+function openMe(){
+  alt={type:"me"};var la=ORIGIN.lat,lo=ORIGIN.lng,ln=landName(la,lo);
+  var a=openAlt("내 위치",(ln||"바다")+" · "+llText(la,lo),null,"#4aa8ff");
+  var s1=sec(a,"지금","실시간",true);
+  s1.appendChild(el("div","big",new Intl.DateTimeFormat(LOC,{hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date())));
+  s1.appendChild(el("div","sub","이 기기 시각 · 지금 "+dayNight(la,lo)));
+  var wx=el("div","rows");wx.style.marginTop="6px";s1.appendChild(wx);wx.appendChild(row("날씨","불러오는 중…"));
+  getJSON("https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m").then(function(j){
+    if(!alt||alt.type!=="me")return;var w=j.current;wx.textContent="";wx.appendChild(row("날씨",nf(w.temperature_2m,1)+"°C · "+(WMO[w.weather_code]||"")));wx.appendChild(row("체감",nf(w.apparent_temperature,1)+"°C"));
+    return getJSON("https://air-quality-api.open-meteo.com/v1/air-quality?latitude="+la+"&longitude="+lo+"&current=pm2_5,pm10").then(function(q){if(!alt||alt.type!=="me")return;var c=q.current,g=airGrade(c.pm2_5),rw=row("초미세먼지",nf(c.pm2_5,0)+" ㎍/㎥ · "+g[0]);rw.lastChild.style.color=g[1];wx.appendChild(rw);wx.appendChild(row("미세먼지 PM10",nf(c.pm10,0)+" ㎍/㎥"))});
+  }).catch(function(){if(alt&&alt.type==="me"){wx.textContent="";wx.appendChild(row("날씨","연결 안 됨"))}});
+  var s2=sec(a,"내 하늘"),r=el("div","rows");s2.appendChild(r);
+  var p=nextPass(Date.now(),ORIGIN);
+  r.appendChild(row("우주정거장 다음 통과",p?kst(p.start,true)+(p.visible?" · 맨눈 관측 가능":""):"48시간 안에는 없음"));
+  var mi=moonInfo(Date.now()),ma=Math.asin(Math.max(-1,Math.min(1,ll2v(la,lo,1).dot(ll2v(mi.lat,mi.lon,1)))))*R2D;
+  r.appendChild(row("달",ma>0?"떠 있음 · "+Math.round(ma)+"° · "+moonPhaseName(mi.age):"지평선 아래 · "+moonPhaseName(mi.age)));
+  if(AUR)r.appendChild(row("오로라 확률",aurAt(la,lo)+"%"+(AUR.kp!=null?" · Kp "+(+AUR.kp).toFixed(1):"")));
+  var vis=PLANETS.filter(function(pl){return pl.alt>5});var sunA=Math.asin(ll2v(la,lo,1).dot(sunDir))*R2D;
+  r.appendChild(row("지금 보이는 행성",sunA<-6?(vis.length?vis.map(function(pl){return pl.ko}).join(", "):"없음"):"해가 진 뒤에 보여요"));
+  var s3=sec(a,"설정"),l=el("div","links");
+  var b1=el("a",null,"위치 다시 찾기");b1.href="#";b1.addEventListener("click",function(e){e.preventDefault();locateMe()});l.appendChild(b1);
+  var b2=el("a",null,"기준을 서울로 되돌리기");b2.href="#";b2.addEventListener("click",function(e){e.preventDefault();ORIGIN={lat:SEOUL.lat,lng:SEOUL.lng,name:"서울",me:false};try{localStorage.removeItem("le-me")}catch(_){}placeMe();$("close").click()});l.appendChild(b2);
+  s3.appendChild(l);s3.appendChild(el("div","note","내 위치는 이 기기에만 저장되고 어디로도 보내지지 않아요. 날씨와 미세먼지를 받을 때만 대략적인 좌표가 Open-Meteo로 전달돼요. 거리·시차·우주정거장 통과 계산이 내 위치 기준으로 바뀌어요."));
+  fly(lo,la);
+}
+
+/* ---------- 즐겨찾기 ---------- */
+var FAV=[];try{FAV=JSON.parse(localStorage.getItem("le-fav")||"[]")}catch(_){}
+var FEAT_BY_A2={};features.forEach(function(f){var c=COUNTRIES[f.id];if(c)FEAT_BY_A2[c.a2]=f});
+function saveFav(){try{localStorage.setItem("le-fav",JSON.stringify(FAV))}catch(_){}renderFavs()}
+function renderFavs(){
+  var box=$("favs");box.textContent="";box.hidden=!FAV.length;
+  FAV.forEach(function(a2){var c=BYA2[a2],f=FEAT_BY_A2[a2];if(!c||!f)return;var b=el("button","mini",(c.flag||"")+" "+c.ko);b.type="button";b.addEventListener("click",function(){select(f,true)});box.appendChild(b)});
+}
+function updFavBtn(){var b=$("fav");if(!current||!current.c){b.hidden=true;return}b.hidden=false;var on=FAV.indexOf(current.c.a2)>=0;b.textContent=on?"★":"☆";b.setAttribute("aria-pressed",on?"true":"false");b.title=on?"즐겨찾기에서 빼기":"즐겨찾기에 추가"}
+$("fav").addEventListener("click",function(){if(!current||!current.c)return;var a2=current.c.a2,i=FAV.indexOf(a2);if(i>=0)FAV.splice(i,1);else FAV.push(a2);saveFav();updFavBtn()});
+renderFavs();
+
+/* ---------- 진짜 밤하늘: 별·별자리·행성 ---------- */
+var skyGroup=new THREE.Group();scene.add(skyGroup);var conOn=true,conGroup=new THREE.Group();skyGroup.add(conGroup);
+if(window.SKY){
+  (function(){
+    var S=SKY.s,n=S.length,pos=new Float32Array(n*3),col=new Float32Array(n*3),sz=new Float32Array(n),c=new THREE.Color();
+    S.forEach(function(st,i){var v=ll2v(st[1],st[0],120);pos[i*3]=v.x;pos[i*3+1]=v.y;pos[i*3+2]=v.z;
+      var bv=st[3],t=Math.max(-0.3,Math.min(1.8,bv));c.setRGB(t<0.4?0.75+t*0.3:1.0,0.85-Math.max(0,t-0.6)*0.18,t<0.4?1.0:1.0-(t-0.4)*0.42);
+      var b=Math.pow(10,-0.4*(st[2]-1))*1.0;var k=Math.min(1,0.25+b);col[i*3]=c.r*k;col[i*3+1]=c.g*k;col[i*3+2]=c.b*k;sz[i]=Math.max(1.1,4.2-st[2]*0.55)});
+    var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("color",new THREE.BufferAttribute(col,3));g.setAttribute("sz",new THREE.BufferAttribute(sz,1));
+    skyGroup.add(new THREE.Points(g,new THREE.ShaderMaterial({uniforms:{pr:{value:renderer.getPixelRatio()}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+      vertexShader:"attribute float sz;attribute vec3 color;varying vec3 vC;uniform float pr;void main(){vC=color;gl_PointSize=sz*pr;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+      fragmentShader:"varying vec3 vC;void main(){float d=length(gl_PointCoord-0.5)*2.0;float a=pow(max(0.0,1.0-d),1.6);if(a<0.01)discard;gl_FragColor=vec4(vC*a,1.0);}"})));
+    var a=[];SKY.l.forEach(function(L){for(var j=0;j<L.length-1;j++){var p=ll2v(L[j][1],L[j][0],118),q=ll2v(L[j+1][1],L[j+1][0],118);a.push(p.x,p.y,p.z,q.x,q.y,q.z)}});
+    var lg=new THREE.BufferGeometry();lg.setAttribute("position",new THREE.BufferAttribute(new Float32Array(a),3));
+    conGroup.add(new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x7fa6d9,transparent:true,opacity:0.22,depthWrite:false})));
+    SKY.c.filter(function(x){return +x[4]===1}).forEach(function(x){var sp=textSprite(LANG==="en"?x[3]:x[2],"rgba(160,190,230,.62)",26);sp.position.copy(ll2v(x[1],x[0],116));sp.scale.set(sp.userData.w/sp.userData.h*4.2,4.2,1);conGroup.add(sp)});
+  })();
+}
+function textSprite(txt,color,px){
+  var cv=document.createElement("canvas"),g=cv.getContext("2d"),f="500 "+px+"px 'IBM Plex Sans KR',sans-serif";g.font=f;var w=Math.ceil(g.measureText(txt).width)+12,h=px+12;cv.width=w;cv.height=h;
+  g.font=f;g.fillStyle=color;g.textBaseline="middle";g.shadowColor="rgba(0,0,0,.9)";g.shadowBlur=6;g.fillText(txt,6,h/2);
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));sp.userData={w:w,h:h};return sp;
+}
+$("con-btn").addEventListener("click",function(){conOn=!conOn;conGroup.visible=conOn;this.setAttribute("aria-pressed",conOn?"true":"false")});
+// 행성 (Schlyter 근사 궤도)
+var PL_EL={
+  mercury:["수성",48.3313,3.24587e-5,7.0047,5.0e-8,29.1241,1.01444e-5,0.387098,0.205635,5.59e-10,168.6562,4.0923344368,"#cfc6b8","해에 가장 가까운 행성이에요. 해 뜨기 직전이나 해 진 직후 낮은 하늘에서만 잠깐 보여요."],
+  venus:["금성",76.6799,2.4659e-5,3.3946,2.75e-8,54.891,1.38374e-5,0.72333,0.006773,-1.302e-9,48.0052,1.6021302244,"#fff2cf","밤하늘에서 달 다음으로 가장 밝은 천체예요. '샛별', '개밥바라기'로 불려요."],
+  mars:["화성",49.5574,2.11081e-5,1.8497,-1.78e-8,286.5016,2.92961e-5,1.523688,0.093405,2.516e-9,18.6021,0.5240207766,"#ff9a6b","붉은빛으로 구별하기 쉬운 행성이에요."],
+  jupiter:["목성",100.4542,2.76854e-5,1.303,-1.557e-7,273.8777,1.64505e-5,5.20256,0.048498,4.469e-9,19.895,0.0830853001,"#ffe0b0","가장 큰 행성이에요. 쌍안경으로 큰 위성 4개가 보여요."],
+  saturn:["토성",113.6634,2.3898e-5,2.4886,-1.081e-7,339.3939,2.97661e-5,9.55475,0.055546,-9.499e-9,316.967,0.0334442282,"#f3dca0","작은 망원경으로도 고리가 보여요."]
+};
+var PL_EN={mercury:"Mercury",venus:"Venus",mars:"Mars",jupiter:"Jupiter",saturn:"Saturn"};
+function planetRaDec(key,ms){
+  var E_=PL_EL[key],d=ms/86400000-10957.5+1.5,rad=D2R,S=function(x){return Math.sin(x*rad)},Cc=function(x){return Math.cos(x*rad)};
+  var N=E_[1]+E_[2]*d,i=E_[3]+E_[4]*d,w=E_[5]+E_[6]*d,a=E_[7],e=E_[8]+E_[9]*d,M=((E_[10]+E_[11]*d)%360+360)%360;
+  var E=M+e*R2D*S(M)*(1+e*Cc(M));for(var k=0;k<5;k++)E=E-(E-e*R2D*S(E)-M)/(1-e*Cc(E));
+  var xv=a*(Cc(E)-e),yv=a*Math.sqrt(1-e*e)*S(E),v=Math.atan2(yv,xv)*R2D,r=Math.hypot(xv,yv);
+  var xh=r*(Cc(N)*Cc(v+w)-S(N)*S(v+w)*Cc(i)),yh=r*(S(N)*Cc(v+w)+Cc(N)*S(v+w)*Cc(i)),zh=r*S(v+w)*S(i);
+  var Ms=356.047+0.9856002585*d,ws=282.9404+4.70935e-5*d,es=0.016709-1.151e-9*d,Es=Ms+es*R2D*S(Ms)*(1+es*Cc(Ms));
+  var xs0=Cc(Es)-es,ys0=Math.sqrt(1-es*es)*S(Es),vs=Math.atan2(ys0,xs0)*R2D,rs=Math.hypot(xs0,ys0),ls=vs+ws;
+  var xg=xh+rs*Cc(ls),yg=yh+rs*S(ls),zg=zh,ecl=(23.4393-3.563e-7*d);
+  var ye=yg*Cc(ecl)-zg*S(ecl),ze=yg*S(ecl)+zg*Cc(ecl);
+  return {ra:Math.atan2(ye,xg)*R2D,dec:Math.atan2(ze,Math.hypot(xg,ye))*R2D};
+}
+var PLANETS=Object.keys(PL_EL).map(function(k){
+  var E_=PL_EL[k],cv=document.createElement("canvas");cv.width=cv.height=64;var g=cv.getContext("2d"),gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,"#fff");gr.addColorStop(.18,E_[12]);gr.addColorStop(.45,E_[12]+"55");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,64,64);
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));sp.scale.set(k==="venus"||k==="jupiter"?5:3.8,k==="venus"||k==="jupiter"?5:3.8,1);
+  var lb=textSprite(LANG==="en"?PL_EN[k]:E_[0],"rgba(255,236,200,.85)",28);lb.scale.set(lb.userData.w/lb.userData.h*3.6,3.6,1);
+  skyGroup.add(sp);skyGroup.add(lb);
+  return {key:k,ko:LANG==="en"?PL_EN[k]:E_[0],desc:E_[13],sp:sp,lb:lb,alt:-90,wp:new THREE.Vector3()};
+});
+function updatePlanets(ms){
+  PLANETS.forEach(function(p){var rd=planetRaDec(p.key,ms);p.ra=rd.ra;p.dec=rd.dec;p.sp.position.copy(ll2v(rd.dec,rd.ra,110));p.lb.position.copy(ll2v(rd.dec-2.4,rd.ra,110));p.alt=planetAlt(p,ORIGIN.lat,ORIGIN.lng,ms)});
+}
+var planetAt=0;
+function gmstDeg(ms){return (18.697374558+24.06570982441908*(ms/86400000-10957.5))*15}
+function planetAlt(p,lat,lon,ms){var sub=((p.ra-gmstDeg(ms))%360+540)%360-180;return Math.asin(Math.max(-1,Math.min(1,ll2v(lat,lon,1).dot(ll2v(p.dec,sub,1)))))*R2D}
+function openPlanet(p){
+  alt={type:"planet"};var ms=Date.now(),a_=planetAlt(p,ORIGIN.lat,ORIGIN.lng,ms),sunA=Math.asin(ll2v(ORIGIN.lat,ORIGIN.lng,1).dot(ll2v(sunLL(ms).lat,sunLL(ms).lon,1)))*R2D;
+  var a=openAlt(p.ko,"행성 · 지금 하늘에서의 위치",null,PL_EL[p.key][12]);
+  var s1=sec(a,ORIGIN.name+" 하늘","실시간 계산",true);
+  s1.appendChild(el("div","big",a_>0?Math.round(a_)+"°":"지평선 아래"));
+  s1.appendChild(el("div","sub",a_>5?(sunA<-6?"지금 맨눈으로 볼 수 있어요":"하늘에 떠 있지만 지금은 낮이라 안 보여요"):"지금은 볼 수 없어요"));
+  var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);
+  r.appendChild(row("적경 · 적위",((p.ra+360)%360/15).toFixed(1)+"h · "+p.dec.toFixed(1)+"°"));
+  s1.appendChild(el("div","note",p.desc+" 위치는 근사 계산이라 1° 안팎 차이가 날 수 있어요."));
+}
+
+/* ---------- 바람 흐름 ---------- */
+var WIND=null,windOn=false,WN=innerWidth<=720?2200:4500,WT=9,windLoaded=false,wAcc=0;
+var wLat=new Float32Array(WN),wLon=new Float32Array(WN),wAge=new Float32Array(WN),wLife=new Float32Array(WN),wSpd=new Float32Array(WN),wTrail=new Float32Array(WN*WT*3);
+var windGeo=new THREE.BufferGeometry(),wPos=new Float32Array(WN*(WT-1)*6),wCol=new Float32Array(WN*(WT-1)*6);
+windGeo.setAttribute("position",new THREE.BufferAttribute(wPos,3));windGeo.setAttribute("color",new THREE.BufferAttribute(wCol,3));
+var windLines=new THREE.LineSegments(windGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.95,depthWrite:false,blending:THREE.AdditiveBlending}));
+windLines.renderOrder=4;windLines.visible=false;windLines.frustumCulled=false;scene.add(windLines);
+var WU=0,WV=0;
+function windUV(lat,lon){
+  var W_=WIND,nl=W_.nlon,U=W_.u,V=W_.v,fy=(lat-W_.lat0)/W_.step,fx=(((lon-W_.lon0)%360)+360)%360/W_.step;
+  if(fy<0)fy=0;if(fy>W_.nlat-1.001)fy=W_.nlat-1.001;
+  var y0=fy|0,xf=fx|0,x0=xf%nl,x1=(x0+1)%nl,ty=fy-y0,tx=fx-xf,a=y0*nl,b=a+nl;
+  var u00=U[a+x0]||0,u01=U[a+x1]||0,u10=U[b+x0]||0,u11=U[b+x1]||0,v00=V[a+x0]||0,v01=V[a+x1]||0,v10=V[b+x0]||0,v11=V[b+x1]||0;
+  WU=(u00*(1-tx)+u01*tx)*(1-ty)+(u10*(1-tx)+u11*tx)*ty;WV=(v00*(1-tx)+v01*tx)*(1-ty)+(v10*(1-tx)+v11*tx)*ty;
+}
+function windSpawn(i){var la=Math.asin(Math.random()*2-1)*R2D,lo=Math.random()*360-180;wLat[i]=la;wLon[i]=lo;wAge[i]=0;wLife[i]=3+Math.random()*5;var v=ll2v(la,lo,1.0065);for(var j=0;j<WT;j++){var o=(i*WT+j)*3;wTrail[o]=v.x;wTrail[o+1]=v.y;wTrail[o+2]=v.z}}
+function windStep(dt){
+  wAcc+=dt;var shift=wAcc>0.07;if(shift)wAcc=0;
+  for(var i=0;i<WN;i++){
+    windUV(wLat[i],wLon[i]);var sp=Math.sqrt(WU*WU+WV*WV);wSpd[i]=sp;
+    wLat[i]+=WV*0.3*dt;wLon[i]+=WU*0.3*dt/Math.max(0.15,Math.cos(wLat[i]*D2R));wAge[i]+=dt;
+    if(wAge[i]>wLife[i]||Math.abs(wLat[i])>84){windSpawn(i);continue}
+    var base=i*WT*3;if(shift)for(var j=WT-1;j>0;j--){wTrail[base+j*3]=wTrail[base+(j-1)*3];wTrail[base+j*3+1]=wTrail[base+(j-1)*3+1];wTrail[base+j*3+2]=wTrail[base+(j-1)*3+2]}
+    var la_=wLat[i]*D2R,lo_=wLon[i]*D2R,cl=Math.cos(la_)*1.0065;wTrail[base]=cl*Math.cos(lo_);wTrail[base+1]=1.0065*Math.sin(la_);wTrail[base+2]=-cl*Math.sin(lo_);
+  }
+  var p=0;
+  for(var i2=0;i2<WN;i2++){
+    var sp2=wSpd[i2],r=sp2<6?0.35+sp2*0.06:sp2<15?0.7+(sp2-6)*0.033:1.0,g=sp2<6?0.6+sp2*0.05:sp2<15?0.9:0.9-(sp2-15)*0.02,b=sp2<6?1.0:sp2<15?1.0-(sp2-6)*0.03:0.6;
+    var fade=Math.min(1,wAge[i2]*1.5)*Math.min(1,(wLife[i2]-wAge[i2])*1.5);
+    for(var j2=0;j2<WT-1;j2++){
+      var a=(i2*WT+j2)*3,bq=a+3,k=(1-j2/(WT-1))*0.7*fade;
+      wPos[p]=wTrail[a];wPos[p+1]=wTrail[a+1];wPos[p+2]=wTrail[a+2];wPos[p+3]=wTrail[bq];wPos[p+4]=wTrail[bq+1];wPos[p+5]=wTrail[bq+2];
+      wCol[p]=r*k;wCol[p+1]=g*k;wCol[p+2]=b*k;var k2=k*0.7;wCol[p+3]=r*k2;wCol[p+4]=g*k2;wCol[p+5]=b*k2;p+=6;
+    }
+  }
+  windGeo.attributes.position.needsUpdate=true;windGeo.attributes.color.needsUpdate=true;
+}
+$("wind-btn").addEventListener("click",function(){
+  windOn=!windOn;this.setAttribute("aria-pressed",windOn?"true":"false");windLines.visible=windOn&&!!WIND;
+  if(windOn&&!windLoaded){windLoaded=true;var btn=this;btn.lastChild.textContent="바람…";
+    getJSON("data/wind.json?v="+Math.floor(Date.now()/3600000)).then(function(j){if(!j||!j.u)throw 0;WIND=j;for(var i=0;i<WN;i++){windSpawn(i);wAge[i]=Math.random()*wLife[i]}windLines.visible=windOn;btn.lastChild.textContent="바람"})
+      .catch(function(){windLoaded=false;btn.lastChild.textContent="바람";notify("바람 데이터를 아직 받지 못했어요. 잠시 뒤 다시 눌러 주세요.")});}
+});
+
+/* ---------- 위성 무리 (스타링크·우주정거장·허블) ---------- */
+var SAT={on:false,loaded:false,n:0,names:[],grp:[],prev:null,cur:null,tPrev:0,tCur:0,worker:null,pos:null,busy:false};
+var satMat=new THREE.ShaderMaterial({uniforms:{pr:{value:renderer.getPixelRatio()}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:"attribute vec3 color;attribute float sz;varying vec3 vC;uniform float pr;void main(){vC=color;gl_PointSize=sz*pr;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:"varying vec3 vC;void main(){float d=length(gl_PointCoord-0.5)*2.0;float a=1.0-smoothstep(0.35,1.0,d);if(a<0.02)discard;gl_FragColor=vec4(vC*a,1.0);}"});
+var satPts=new THREE.Points(new THREE.BufferGeometry(),satMat);satPts.renderOrder=6;satPts.visible=false;satPts.frustumCulled=false;scene.add(satPts);
+var SAT_WORKER="importScripts('https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js');var recs=[];"+
+  "onmessage=function(e){var d=e.data;if(d.tle){recs=d.tle.map(function(t){try{return satellite.twoline2satrec(t[0],t[1])}catch(_){return null}});postMessage({ready:recs.length});return}"+
+  "var t=new Date(d.t),gm=satellite.gstime(t),out=new Float32Array(recs.length*3);"+
+  "for(var i=0;i<recs.length;i++){var r=recs[i],o=i*3;out[o]=NaN;if(!r)continue;try{var pv=satellite.propagate(r,t);if(!pv||!pv.position||typeof pv.position==='boolean')continue;var g=satellite.eciToGeodetic(pv.position,gm),R=1+g.height/6371,c=Math.cos(g.latitude);out[o]=R*c*Math.cos(g.longitude);out[o+1]=R*Math.sin(g.latitude);out[o+2]=-R*c*Math.sin(g.longitude)}catch(_){}}"+
+  "postMessage({t:d.t,pos:out},[out.buffer])}";
+function satStart(){
+  SAT.loaded=true;$("sat-btn").lastChild.textContent="위성…";
+  getJSON("data/sats.json?v="+Math.floor(Date.now()/(6*3600000))).then(function(j){
+    if(!j||!j.groups)throw 0;var tle=[],cols=[],szs=[],names=[],grp=[];
+    [["starlink",[0.62,0.78,1.0],2.6],["stations",[0.45,1.0,1.0],6],["hubble",[1.0,0.82,0.4],7]].forEach(function(gk){(j.groups[gk[0]]||[]).forEach(function(t){if(/^1 25544/.test(t[1]))return;tle.push([t[1],t[2]]);names.push(t[0]);grp.push(gk[0]);cols.push(gk[1][0],gk[1][1],gk[1][2]);szs.push(gk[2])})});
+    SAT.n=tle.length;SAT.names=names;SAT.grp=grp;SAT.pos=new Float32Array(SAT.n*3);SAT.at=j.at;
+    var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(SAT.pos,3));g.setAttribute("color",new THREE.BufferAttribute(new Float32Array(cols),3));g.setAttribute("sz",new THREE.BufferAttribute(new Float32Array(szs),1));
+    satPts.geometry.dispose();satPts.geometry=g;
+    var w=SAT.worker=new Worker(URL.createObjectURL(new Blob([SAT_WORKER],{type:"text/javascript"})));
+    w.onmessage=function(e){var d=e.data;if(d.ready!=null){satTick();return}SAT.busy=false;SAT.prev=SAT.cur;SAT.tPrev=SAT.tCur;SAT.cur=d.pos;SAT.tCur=d.t;if(!SAT.prev){SAT.prev=SAT.cur;SAT.tPrev=SAT.tCur-1000}};
+    w.onerror=function(){notify("위성 위치 계산을 시작하지 못했어요.");$("sat-btn").lastChild.textContent="위성"};
+    w.postMessage({tle:tle});$("sat-btn").lastChild.textContent="위성 "+nf(SAT.n,0);satPts.visible=SAT.on;
+  }).catch(function(){SAT.loaded=false;$("sat-btn").lastChild.textContent="위성";notify("위성 데이터를 아직 받지 못했어요. 잠시 뒤 다시 눌러 주세요.")});
+}
+function satTick(){if(!SAT.worker||!SAT.on||SAT.busy)return;SAT.busy=true;SAT.worker.postMessage({t:simNow()+1000})}
+setInterval(satTick,1000);
+$("sat-btn").addEventListener("click",function(){SAT.on=!SAT.on;this.setAttribute("aria-pressed",SAT.on?"true":"false");satPts.visible=SAT.on&&!!SAT.n;if(SAT.on&&!SAT.loaded)satStart();else satTick()});
+function satFrame(){
+  if(!SAT.on||!SAT.cur)return;var t=simNow(),span=Math.max(1,SAT.tCur-SAT.tPrev),u=Math.max(0,Math.min(2,(t-SAT.tPrev)/span)),P=SAT.prev,C=SAT.cur,O=SAT.pos;
+  for(var i=0;i<O.length;i++){var a=P[i],b=C[i];O[i]=(a===a&&b===b)?a+(b-a)*u:(b===b?b:1e4)}
+  satPts.geometry.attributes.position.needsUpdate=true;
+}
+function openSat(i){
+  alt={type:"sat"};var g=SAT.grp[i],x=SAT.pos[i*3],y=SAT.pos[i*3+1],z=SAT.pos[i*3+2],R=Math.hypot(x,y,z),lat=Math.asin(y/R)*R2D,lon=Math.atan2(-z,x)*R2D;
+  var px=SAT.prev[i*3],py=SAT.prev[i*3+1],pz=SAT.prev[i*3+2],cx=SAT.cur[i*3],cy=SAT.cur[i*3+1],cz=SAT.cur[i*3+2],spd=Math.hypot(cx-px,cy-py,cz-pz)*6371/Math.max(0.5,(SAT.tCur-SAT.tPrev)/1000)*3600;
+  var kind={starlink:"스타링크 인터넷 위성",stations:"우주정거장·유인 우주선",hubble:"허블 우주망원경"}[g];
+  var a=openAlt(SAT.names[i],kind,null,g==="hubble"?"#ffd166":g==="stations"?"#7df9ff":"#9ec6ff");
+  var s1=sec(a,"지금 위치","실시간 계산",true);var ln=landName(lat,lon);
+  s1.appendChild(el("div","big txt",ln?ln+" 상공":"바다 위"));s1.appendChild(el("div","sub",llText(lat,lon)));
+  var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);r.appendChild(row("고도",nf((R-1)*6371,0)+" km"));if(spd>1000&&spd<40000)r.appendChild(row("속도","약 "+nf(Math.round(spd/100)*100,0)+" km/h"));
+  s1.appendChild(el("div","note",g==="starlink"?"스페이스X가 띄운 위성 인터넷용 위성이에요. 수천 기가 낮은 궤도를 촘촘히 돌고 있어요.":g==="hubble"?"1990년에 발사된 우주망원경이에요. 약 95분에 한 바퀴씩 돌아요.":"사람이 머무는 우주정거장이나 그와 함께 움직이는 우주선이에요. 중국 톈궁(CSS)도 여기 들어 있어요."));
+  s1.appendChild(el("div","note","궤도 요소 출처: Celestrak · "+(SAT.at?ago(SAT.at)+" 업데이트":"")));
+}
+
+/* ---------- 산불 (NASA FIRMS) ---------- */
+var FIRES=null,fireOn=false;
+var fireMat=new THREE.ShaderMaterial({uniforms:{pr:{value:renderer.getPixelRatio()},time:{value:0}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:"attribute float sz;varying float vS;uniform float pr;void main(){vS=sz;gl_PointSize=sz*pr;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:"uniform float time;varying float vS;void main(){float d=length(gl_PointCoord-0.5)*2.0;float a=pow(max(0.0,1.0-d),1.4)*(0.85+0.15*sin(time*6.0+vS*3.0));if(a<0.02)discard;gl_FragColor=vec4(vec3(1.0,0.45,0.12)*a+vec3(1.0,0.9,0.5)*pow(a,4.0),1.0);}"});
+var firePts=new THREE.Points(new THREE.BufferGeometry(),fireMat);firePts.renderOrder=5;firePts.visible=false;scene.add(firePts);
+getJSON("data/fires.json?v="+Math.floor(Date.now()/3600000)).then(function(j){
+  if(!j||!j.cells||!j.cells.length)throw 0;FIRES=j;var n=j.cells.length,pos=new Float32Array(n*3),sz=new Float32Array(n);
+  j.cells.forEach(function(c,i){c.v=ll2v(c[1],c[0],1.003);pos[i*3]=c.v.x;pos[i*3+1]=c.v.y;pos[i*3+2]=c.v.z;sz[i]=Math.min(16,4+Math.log(1+c[2])*2.4)});
+  var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("sz",new THREE.BufferAttribute(sz,1));firePts.geometry=g;
+  $("fire-btn").lastChild.textContent="산불";
+}).catch(function(){$("fire-btn").lastChild.textContent="산불 (설정 필요)"});
+$("fire-btn").addEventListener("click",function(){
+  if(!FIRES){notify("산불 레이어는 NASA FIRMS 무료 키가 있어야 켜져요. 키를 저장소 Secrets에 FIRMS_KEY로 넣으면 다음 업데이트부터 보여요.");return}
+  fireOn=!fireOn;firePts.visible=fireOn;this.setAttribute("aria-pressed",fireOn?"true":"false");
+});
+function openFire(c){
+  alt={type:"fire"};var ln=landName(c[1],c[0]);
+  var a=openAlt("산불 감지",(ln||"바다·섬")+" · "+llText(c[1],c[0]),null,"#ff7a2a");
+  var s1=sec(a,"최근 24시간",FIRES.at?"NASA FIRMS · "+ago(FIRES.at)+" 업데이트":"NASA FIRMS",false);
+  s1.appendChild(el("div","big",nf(c[2],0)+"곳"));s1.appendChild(el("div","sub","이 근처(약 50km 칸)에서 위성이 감지한 불"));
+  var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);r.appendChild(row("열 방출량 합계",nf(c[3],0)+" MW"));
+  r.appendChild(row(ORIGIN.name+"에서","약 "+nf(Math.round(kmFromOrigin(c[1],c[0])/10)*10,0)+" km"));
+  s1.appendChild(el("div","note","VIIRS 위성이 감지한 뜨거운 지점이라 산불뿐 아니라 농경지 소각, 공장 열원도 섞여 있을 수 있어요."));
+  fly(c[0],c[1]);
+}
+
+/* ---------- 1년 지진 타임랩스 ---------- */
+var QY=null,tlMat=new THREE.ShaderMaterial({uniforms:{now:{value:-1e9},pr:{value:renderer.getPixelRatio()}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:"attribute float t;attribute float mag;uniform float now;uniform float pr;varying float vAge;varying float vMag;void main(){vAge=now-t;vMag=mag;float fl=vAge<0.0?0.0:(vAge<10.0?1.0-vAge/10.0:0.0);gl_PointSize=vAge<0.0?0.0:pr*((3.0+pow(max(mag-4.5,0.0),1.5)*3.0)+fl*fl*(10.0+pow(max(mag-4.5,0.0),1.7)*16.0));gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:"varying float vAge;varying float vMag;void main(){if(vAge<0.0)discard;vec2 c=gl_PointCoord-0.5;float d=length(c)*2.0;float fl=vAge<10.0?1.0-vAge/10.0:0.0;vec3 col=vMag>=7.0?vec3(1.0,0.2,0.25):vMag>=6.0?vec3(1.0,0.45,0.25):vec3(1.0,0.75,0.35);float core=1.0-smoothstep(0.0,0.35*(1.0-fl*0.7),d);float ring=fl*(1.0-smoothstep(0.0,0.08,abs(d-(1.0-fl))));float a=max(core*(0.35+0.65*fl),ring);if(a<0.02)discard;gl_FragColor=vec4(col*a,1.0);}"});
+var tlPts=new THREE.Points(new THREE.BufferGeometry(),tlMat);tlPts.renderOrder=6;tlPts.visible=false;tlPts.frustumCulled=false;scene.add(tlPts);
+var timeOverride=null;
+function simNow(){return timeOverride!=null?timeOverride:Date.now()+shiftMin*60000}
+function loadQY(){
+  if(QY)return Promise.resolve(QY);
+  return getJSON("data/quakes-year.json?v="+Math.floor(Date.now()/(6*3600000))).then(function(j){
+    if(!j||!j.items||!j.items.length)throw 0;QY=j;var n=j.items.length,pos=new Float32Array(n*3),t=new Float32Array(n),m=new Float32Array(n);
+    j.items.forEach(function(e,i){var v=ll2v(e[1],e[0],1.004);pos[i*3]=v.x;pos[i*3+1]=v.y;pos[i*3+2]=v.z;t[i]=e[4]/86400;m[i]=e[3]});
+    var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("t",new THREE.BufferAttribute(t,1));g.setAttribute("mag",new THREE.BufferAttribute(m,1));tlPts.geometry=g;return QY;
+  });
+}
+var TL=null,saveVis=null;
+function startTimelapse(mode){
+  $("tsheet").hidden=true;$("ts-tlnote").textContent="불러오는 중…";
+  loadQY().then(function(){
+    $("ts-tlnote").textContent="";
+    if(panel.classList.contains("open"))$("close").click();
+    cmpBase=null;$("toast").hidden=true;setShift(0);target=null;
+    saveVis=[quakePts.visible,issGroup.visible,satPts.visible,flPts.visible,stormGroup.visible,volcGroup.visible,moonOn];
+    quakePts.visible=issGroup.visible=satPts.visible=flPts.visible=stormGroup.visible=volcGroup.visible=false;moonOn=false;tlPts.visible=true;
+    if(TCFG.music)audioStart();
+    document.body.classList.add("touring");
+    if(mode!=="play"&&recSupported())recStart(mode);
+    var end=Date.now(),start=end-365*864e5;
+    TL={start:start,end:end,dur:46,t:0,idx:0,count:0,max:null,rec:!!rec,done:0};
+    cam.lat=18;cam.dist=Z(1.05);lookGoal.set(0,0,0);
+    $("cap-l").textContent=T("1년 타임랩스");
+    tour={tl:true};sfxWhoosh();
+  }).catch(function(){$("ts-tlnote").textContent="지진 기록을 아직 받지 못했어요. 잠시 뒤 다시 시도해 주세요."});
+}
+function tlUpdate(dt){
+  var L_=TL;L_.t+=dt;var u=Math.min(1,L_.t/L_.dur),ms=L_.start+(L_.end-L_.start)*u;
+  cam.lon+=dt*8;cam.dist+=(Z(1.05)-cam.dist)*dt*0.5;
+  var utcH=((12-(cam.lon-55)/15)%24+24)%24,day=Math.floor(ms/864e5)*864e5;timeOverride=day+utcH*3600e3;
+  tlMat.uniforms.now.value=ms/864e5*1+0;tlMat.uniforms.now.value=ms/86400000;
+  var it=QY.items;while(L_.idx<it.length&&it[L_.idx][4]*1000<=ms){var e=it[L_.idx];L_.count++;if(!L_.max||e[3]>L_.max[3])L_.max=e;if(e[3]>=7&&AU&&AU.on)bell(AU.ctx.currentTime,60,0.05);L_.idx++}
+  var d=new Date(ms);$("cap-t").textContent=LANG==="en"?d.toLocaleDateString("en-US",{year:"numeric",month:"long"}):d.getFullYear()+"년 "+(d.getMonth()+1)+"월";
+  $("cap-s").textContent=T("규모 5 이상 지진")+" "+nf(L_.count,0)+(LANG==="en"?"":"회")+(L_.max?" · "+T("가장 큰 지진")+" M"+L_.max[3].toFixed(1):"");
+  if(!$("caption").classList.contains("show")&&L_.t>0.6&&u<1)$("caption").classList.add("show");
+  if(u>=1){
+    if(!L_.done){L_.done=1;L_.hold=0;$("cap-t").textContent=T("지난 1년");$("cap-s").textContent=T("규모 5 이상 지진")+" "+nf(L_.count,0)+(LANG==="en"?"":"회")+(L_.max?" · "+T("가장 큰 지진")+" M"+L_.max[3].toFixed(1)+" "+(L_.max[5]||""):"")}
+    L_.hold+=dt;if(L_.hold>5)stopTour();
+  }
+}
+function endTimelapse(){
+  TL=null;timeOverride=null;tlPts.visible=false;tlMat.uniforms.now.value=-1e9;
+  if(saveVis){quakePts.visible=saveVis[0];issGroup.visible=saveVis[1];satPts.visible=saveVis[2];flPts.visible=saveVis[3];stormGroup.visible=saveVis[4];volcGroup.visible=saveVis[5];moonOn=saveVis[6];saveVis=null}
+}
+
+/* 타임랩스·언어 버튼 */
+$("tl-play").addEventListener("click",function(){startTimelapse("play")});
+$("tl-rec-v").addEventListener("click",function(){startTimelapse("v")});
+$("tl-rec-h").addEventListener("click",function(){startTimelapse("h")});
+if(!recSupported()){$("tl-rec-v").disabled=$("tl-rec-h").disabled=true}
+$("lang-btn").textContent=LANG==="en"?"한국어":"EN";
+$("lang-btn").addEventListener("click",function(){try{localStorage.setItem("le-lang",LANG==="en"?"ko":"en")}catch(_){}location.reload()});
+
 /* ---------- 앱으로 설치 (홈 화면) ---------- */
 if("serviceWorker" in navigator&&/github\.io$/.test(location.hostname)){try{navigator.serviceWorker.register("sw.js").catch(function(){})}catch(_){}}
 
@@ -1568,9 +1974,9 @@ var clockEl=$("clock"),lastSec=-1,lastT=performance.now();
 function frame(t){
   requestAnimationFrame(frame);
   var rdt=Math.max(0,(t-lastT)/1000),dt=Math.min(0.05,rdt);lastT=t;
-  var now=Date.now(),s=sunLL(now+shiftMin*60000);sunDir.copy(ll2v(s.lat,s.lon,1));
+  var now=Date.now(),simT=simNow(),s=sunLL(simT);sunDir.copy(ll2v(s.lat,s.lon,1));
   if(cloudMat.uniforms.useMap.value<0.5)cloudMat.uniforms.t.value+=dt*0.004;if(window.__sun)window.__sun.position.copy(sunDir).multiplyScalar(110);
-  if(tour){tourUpdate(Math.min(0.25,rdt));clampCam()}
+  if(tour){if(tour.tl)tlUpdate(Math.min(0.25,rdt));else tourUpdate(Math.min(0.25,rdt));clampCam()}
   else if(pcount()===0){
     if(target){
       var dl=((target.lon-cam.lon)%360+540)%360-180,k=1-Math.exp(-dt*4.5);
@@ -1583,7 +1989,7 @@ function frame(t){
     clampCam();
   }
   quakeMat.uniforms.time.value=t/1000;
-  if(satrec){var ip=issAt(now+shiftMin*60000);if(ip){issPos=ip;if(Math.abs(now+shiftMin*60000-issOrbitAt)>30000)buildOrbit(now+shiftMin*60000)}}
+  if(satrec){var ip=issAt(simT);if(ip){issPos=ip;if(Math.abs(simT-issOrbitAt)>30000)buildOrbit(simT)}}
   else if(issLive){issPos=issLive}
   if(issPos){issSprite.position.copy(issPos.v);var ps=0.055*(cam.dist-0.6)*(1+0.12*Math.sin(t/300));issSprite.scale.set(ps,ps,1)}
   issSprite.visible=!!issPos;
@@ -1591,8 +1997,11 @@ function frame(t){
   for(var sj=0;sj<STORMS.length;sj++){var sm=STORMS[sj];sm.sprite.material.rotation+=dt*(sm.pos[1]>=0?1.4:-1.4);var ss=0.055*(cam.dist-0.6);sm.sprite.scale.set(ss,ss,1);sm.sprite.visible=!hidden(sm.v)}
   lookCur.lerp(lookGoal,1-Math.exp(-Math.min(0.25,rdt)*1.6));
   camera.position.copy(ll2v(cam.lat,cam.lon,cam.dist)).add(lookCur);camera.up.set(0,1,0);camera.lookAt(lookCur);
-  if(moonOn){moonNow=moonInfo(now+shiftMin*60000);moonMesh.position.copy(ll2v(moonNow.lat,moonNow.lon,MOON_D));moonMesh.lookAt(0,0,0);moonMesh.visible=camera.position.distanceTo(moonMesh.position)>0.7}else moonMesh.visible=false;
+  if(moonOn){moonNow=moonInfo(simT);moonMesh.position.copy(ll2v(moonNow.lat,moonNow.lon,MOON_D));moonMesh.lookAt(0,0,0);moonMesh.visible=camera.position.distanceTo(moonMesh.position)>0.7}else moonMesh.visible=false;
   for(var vj=0;vj<VOLC.length;vj++){var vs=0.05*(cam.dist-0.6);VOLC[vj].sprite.scale.set(vs,vs,1);VOLC[vj].sprite.visible=!hidden(VOLC[vj].v)}
+  if(windOn&&WIND&&!document.hidden)windStep(Math.min(0.05,rdt));satFrame();fireMat.uniforms.time.value=t/1000;
+  skyGroup.rotation.y=-gmstDeg(simT)*D2R;if(Math.abs(simT-planetAt)>60000){planetAt=simT;updatePlanets(simT)}
+  if(meSprite.visible){var mss=0.045*(cam.dist-0.6);meSprite.scale.set(mss,mss,1)}
   renderer.render(scene,camera);
   if(rec)recFrame(rdt);
   var sec=Math.floor(now/1000);
@@ -1600,7 +2009,7 @@ function frame(t){
     clockEl.textContent=(shiftMin?"시간 이동 "+(shiftMin>0?"+":"−")+hm(Math.abs(shiftMin))+" → UTC "+new Date(now+shiftMin*60000).toISOString().slice(11,16):"UTC "+d.toISOString().slice(11,19))+" · 태양 직하점 "+Math.abs(s.lat).toFixed(1)+"°"+(s.lat>=0?"N":"S")+" "+Math.abs(s.lon).toFixed(1)+"°"+(s.lon>=0?"E":"W");
     tickPanel();tickISS();tickCmp();tickFlights();
     if(rec){var rs_=Math.floor((Date.now()-rec.t0)/1000);$("rec-t").textContent="REC "+Math.floor(rs_/60)+":"+(rs_%60<10?"0":"")+rs_%60}
-    if(tour)$("cap-l").textContent="LIVE · UTC "+d.toISOString().slice(11,16);}
+    if(tour&&!tour.tl)$("cap-l").textContent="LIVE · UTC "+d.toISOString().slice(11,16);}
 }
 resize();
 var kr=null;for(var i=0;i<features.length;i++)if(features[i].id==="410"){kr=features[i];break}

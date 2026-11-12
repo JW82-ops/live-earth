@@ -22,6 +22,11 @@
 | 항공편 | OpenSky (브라우저에서 직접, 보고 있는 지역만) | 켜 두면 45초마다 |
 | 달 | 브라우저에서 위치·위상 계산, 일식·월식 일정표 내장 | 매 순간 |
 | 매거진 | `scripts/magazines-src.json` 목록 → 주소 확인 + 최신 기사 제목 → `data/magazines.json` | 6시간마다 |
+| 바람 | Open-Meteo 7.5도 격자 → `data/wind.json` | 6시간마다 |
+| 위성 무리 | Celestrak (스타링크 전체·우주정거장·허블) → `data/sats.json`, 위치는 브라우저 워커에서 계산 | 궤도는 12시간마다 |
+| 별·별자리 | `sky.js` (d3-celestial 데이터, BSD-3, 예일 밝은 별 목록 기반) · 행성은 브라우저에서 계산 | 고정 |
+| 지진 1년 | USGS 규모 5 이상 → `data/quakes-year.json` | 하루 한 번 |
+| 산불 | NASA FIRMS (저장소 Secrets에 `FIRMS_KEY`가 있을 때만) → `data/fires.json` | 3시간마다 |
 | 위성 구름 | clouds.matteason.co.uk → `data/clouds.png` | GitHub Actions가 매시간 받아서 바로 배포 |
 
 환율·날씨 서버에 닿지 못하면 `snapshot.js`의 환율과 날씨 검색 링크로 대신한다.
@@ -53,3 +58,13 @@
 - 레이어: 구름, 지진, 국제우주정거장(서울 다음 통과 시각), 태풍, 오로라
 - **투어**: 장면 고르기·나라 추가, 배경음악(직접 합성), 세로 9:16/가로 16:9 영상 저장.
   기본 순서: 해 뜨는 곳 → 서울 → 큰 지진 → 태풍 → 오로라 → ISS → 해 지는 곳을 자동으로 도는 시네마틱 모드 (화면을 누르면 종료)
+
+## 산불 레이어 켜기
+
+1. https://firms.modaps.eosdis.nasa.gov/api/map_key/ 에서 이메일로 무료 MAP_KEY 발급
+2. 저장소 Settings → Secrets and variables → Actions → New repository secret
+3. 이름 `FIRMS_KEY`, 값에 발급받은 키를 넣고 저장 → 다음 실행부터 산불 레이어가 켜짐
+
+## 무료 API 호출 한도
+
+Open-Meteo 무료 한도(하루 1만 회)를 넘지 않도록 미세먼지는 3시간, 바람은 6시간마다만 새로 받고 그 사이에는 이전 값을 재사용한다.
