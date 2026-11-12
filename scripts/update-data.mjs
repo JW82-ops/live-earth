@@ -151,6 +151,82 @@ async function updateIss() {
   console.log("iss: unavailable");
   return null;
 }
+// 활동 중인 열대저기압(태풍·허리케인·사이클론): GDACS
+async function updateStorms() {
+  const txt = await get("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC&alertlevel=green;orange;red");
+  let list;
+  try { list = JSON.parse(txt).features; } catch { console.log("storms: unavailable"); return null; }
+  if (!Array.isArray(list)) { console.log("storms: unavailable"); return null; }
+  const cutoff = Date.now() - 36 * 3600e3;
+  const cur = list.filter((f) => String(f.properties.iscurrent) === "true" && new Date(f.properties.todate + "Z") >= cutoff);
+  const items = [];
+  for (const f of cur) {
+    const p = f.properties;
+    let geo = null;
+    try { geo = JSON.parse((await get(p.url?.geometry || `https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=${p.eventid}&episodeid=${p.episodeid}`)) || "null"); } catch {}
+    const segs = (geo?.features || [])
+      .filter((g) => g.geometry?.type === "LineString" && String(g.properties.Class || "").startsWith("Line_"))
+      .map((g) => ({ fc: String(g.properties.forecast) === "true", d: g.properties.polygondate || "", c: g.geometry.coordinates }))
+      .sort((a, b) => a.d.localeCompare(b.d));
+    const chain = (arr) => {
+      const out = [];
+      for (const s of arr) for (const c of s.c) {
+        const last = out[out.length - 1];
+        if (!last || Math.abs(last[0] - c[0]) > 1e-6 || Math.abs(last[1] - c[1]) > 1e-6) out.push([+c[0].toFixed(2), +c[1].toFixed(2)]);
+      }
+      return out;
+    };
+    const past = chain(segs.filter((s) => !s.fc));
+    const fc = chain(segs.filter((s) => s.fc));
+    const centroid = (geo?.features || []).find((g) => g.properties?.Class === "Point_Centroid")?.geometry?.coordinates || f.geometry.coordinates;
+    const pos = past.length ? past[past.length - 1] : centroid;
+    if (fc.length && pos && (fc[0][0] !== pos[0] || fc[0][1] !== pos[1])) fc.unshift(pos);
+    items.push({
+      id: p.eventid, name: String(p.eventname || p.name).replace(/-\d+$/, ""), wind: Math.round(p.severitydata?.severity || 0),
+      text: p.severitydata?.severitytext || "", alert: p.alertlevel, source: p.source, from: p.fromdate, to: p.todate,
+      pos, past, fc, countries: (p.affectedcountries || []).map((c) => c.iso2).filter(Boolean),
+      url: p.url?.report || "https://www.gdacs.org/",
+    });
+  }
+  console.log(`storms: ${items.length} active (${items.map((i) => i.name + ":" + i.past.length + "/" + i.fc.length).join(", ")})`);
+  return { at: new Date().toISOString(), items };
+}
+
+// 오로라 예보(NOAA OVATION) + 지자기 지수 Kp. 360×181 격자를 한 글자당 1바이트로 압축해 저장한다.
+async function updateAurora() {
+  let j;
+  try { j = JSON.parse(await get("https://services.swpc.noaa.gov/json/ovation_aurora_latest.json")); } catch { console.log("aurora: unavailable"); return null; }
+  if (!j?.coordinates) { console.log("aurora: unavailable"); return null; }
+  const grid = new Uint8Array(360 * 181);
+  for (const [lon, lat, v] of j.coordinates) {
+    const x = ((Math.round(lon) % 360) + 360) % 360, y = Math.round(lat) + 90;
+    if (y >= 0 && y <= 180) grid[y * 360 + x] = Math.max(0, Math.min(100, Math.round(v)));
+  }
+  let kp = null, kpAt = null;
+  try {
+    const k = JSON.parse(await get("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"));
+    const last = Array.isArray(k[0]) ? k[k.length - 1] : k[k.length - 1];
+    kp = Array.isArray(last) ? +last[1] : +last.Kp;
+    kpAt = Array.isArray(last) ? last[0] : last.time_tag;
+  } catch {}
+  console.log(`aurora: ${j["Forecast Time"]} kp=${kp}`);
+  return { at: new Date().toISOString(), obs: j["Observation Time"], fc: j["Forecast Time"], kp, kpAt, w: 360, h: 181, b64: Buffer.from(grid).toString("base64") };
+}
+
+// 원화 기준 최근 30일 환율 (유럽중앙은행 기준환율, 주요 통화 약 30개)
+async function updateFxHist() {
+  const start = new Date(Date.now() - 31 * 864e5).toISOString().slice(0, 10);
+  let j;
+  try { j = JSON.parse(await get(`https://api.frankfurter.dev/v1/${start}..?from=KRW`)); } catch { console.log("fxhist: unavailable"); return null; }
+  const dates = Object.keys(j?.rates || {}).sort();
+  if (!dates.length) return null;
+  const codes = Object.keys(j.rates[dates[dates.length - 1]]);
+  const rates = {};
+  for (const c of codes) rates[c] = dates.map((d) => (j.rates[d][c] ? +(1 / j.rates[d][c]).toPrecision(6) : null));
+  console.log(`fxhist: ${dates.length} days, ${codes.length} currencies`);
+  return { at: new Date().toISOString(), dates, rates };
+}
+
 async function keepOrPrev(name, fresh) {
   if (fresh) return fresh;
   if (process.env.SITE_URL) {
@@ -169,9 +245,15 @@ if (!prev.items) {
   try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
 }
 
-let [{ items, ok }, clouds, quakes, iss] = await Promise.all([updateNews(), updateClouds(), updateQuakes(), updateIss()]);
+let [{ items, ok }, clouds, quakes, iss, storms, aurora, fxhist] = await Promise.all([
+  updateNews(), updateClouds(), updateQuakes(), updateIss(), updateStorms(), updateAurora(), updateFxHist(),
+]);
 quakes = await keepOrPrev("quakes.json", quakes);
 iss = await keepOrPrev("iss.json", iss);
+storms = await keepOrPrev("storms.json", storms);
+aurora = await keepOrPrev("aurora.json", aurora);
+fxhist = await keepOrPrev("fxhist.json", fxhist);
+for (const [n, v] of [["storms.json", storms], ["aurora.json", aurora], ["fxhist.json", fxhist]]) if (v) await writeFile(new URL(n, DATA), JSON.stringify(v));
 if (quakes) await writeFile(new URL("quakes.json", DATA), JSON.stringify(quakes));
 if (iss) await writeFile(new URL("iss.json", DATA), JSON.stringify(iss));
 if (!clouds && prev.clouds && process.env.SITE_URL) {

@@ -116,7 +116,7 @@ section:last-child{border-bottom:0}
 .layers .mini{background:rgba(9,14,23,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:6px 10px;display:inline-flex;align-items:center;gap:6px}
 .layers .mini i{width:7px;height:7px;border-radius:50%;background:currentColor}
 #cloud i{background:#cfe0ff}#quake-btn i{background:#ff7a45}#iss-btn i{background:#7df9ff}
-.layers .mini[aria-pressed="false"] i{background:transparent;box-shadow:inset 0 0 0 1px currentColor}
+.layers .mini[aria-pressed="false"]:not(#tour-btn) i{background:transparent;box-shadow:inset 0 0 0 1px currentColor}
 .qdot{display:inline-block;width:30px;height:30px;border-radius:50%;margin:2px}
 .qdot.iss{background:radial-gradient(circle,#fff 0 18%,#7df9ff 30%,rgba(125,249,255,0) 70%)}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
@@ -124,6 +124,38 @@ section:last-child{border-bottom:0}
 .legend i{width:9px;height:9px;border-radius:50%}
 .hud{padding-top:max(16px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left))}
 #panel{bottom:max(16px,env(safe-area-inset-bottom))}
+#storm-btn i{background:#ff8cc0}#aurora-btn i{background:#5dff9c}
+#tour-btn{border-color:rgba(255,180,84,.6);color:var(--sun)}
+#tour-btn i{width:0;height:0;border-radius:0;background:none!important;box-shadow:none!important;border-left:8px solid var(--sun);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.qdot.storm{background:radial-gradient(circle,#fff 0 14%,#ff8cc0 34%,rgba(255,95,162,0) 70%)}
+.qdot.aur{background:radial-gradient(circle,#e6fff0 0 14%,#5dff9c 38%,rgba(93,255,156,0) 72%)}
+.p-head .mini{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font:inherit;font-size:13px;border-radius:99px;padding:0 12px;height:34px;cursor:pointer;flex:none}
+.p-head .mini:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.cmp{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 10px;font-size:14px;align-items:baseline}
+.cmp .h{font-size:12px;color:var(--muted);text-align:right;overflow-wrap:anywhere}
+.cmp span{color:var(--muted)}
+.cmp b{font-family:var(--font-num);font-weight:500;font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:anywhere}
+.cmp b.t{font-family:var(--font-body)}
+.spark{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.spark .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:var(--muted)}
+.spark .chg{font-family:var(--font-num);font-size:13px;color:var(--ink)}
+.spark svg{width:100%;height:auto;display:block}
+.spark .meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+#toast{position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(9,14,23,.94);border:1px solid var(--sun);border-radius:12px;padding:8px 8px 8px 14px;font-size:13px;display:flex;gap:10px;align-items:center;z-index:20;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#toast button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:12px;border-radius:8px;padding:5px 10px;cursor:pointer;white-space:nowrap}
+.hud,.hint,#panel{transition:opacity .6s}
+body.touring .hud,body.touring .hint,body.touring #panel,body.touring #toast{opacity:0;pointer-events:none}
+body.touring #stage{cursor:none}
+#caption{position:fixed;left:max(28px,env(safe-area-inset-left));bottom:max(44px,env(safe-area-inset-bottom));display:none;flex-direction:column;gap:6px;pointer-events:none;text-shadow:0 2px 24px rgba(0,0,0,.95),0 1px 3px rgba(0,0,0,.8);max-width:min(620px,calc(100vw - 56px))}
+body.touring #caption{display:flex}
+#caption .in{opacity:0;transform:translateY(10px);transition:opacity .9s ease,transform .9s ease}
+#caption.show .in{opacity:1;transform:none}
+#caption .live{font-family:var(--font-num);font-size:12px;letter-spacing:.12em;color:var(--live);transition-delay:0s}
+#caption .t{font-size:clamp(30px,6.4vw,58px);font-weight:600;line-height:1.08;letter-spacing:-.01em;text-wrap:balance;transition-delay:.12s}
+#caption .s{font-size:clamp(14px,2.5vw,20px);color:#dbe3ee;transition-delay:.28s}
+#tourhint{position:fixed;right:16px;top:max(16px,env(safe-area-inset-top));font-size:12px;color:var(--muted);display:none;pointer-events:none}
+body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
+@keyframes fadeaway{0%,70%{opacity:1}100%{opacity:0}}
 @media (max-width:720px){
   #panel{top:auto;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));width:auto;height:54%;transform:translateY(calc(100% + 16px))}
   .hint{display:none}
@@ -154,15 +186,22 @@ section:last-child{border-bottom:0}
       <button class="mini" id="cloud" type="button" aria-pressed="true" title="연출용 구름 (실제 구름 아님)"><i></i><span>구름</span></button>
       <button class="mini" id="quake-btn" type="button" aria-pressed="true" title="최근 24시간 규모 2.5 이상 지진"><i></i><span>지진</span></button>
       <button class="mini" id="iss-btn" type="button" aria-pressed="true" title="국제우주정거장 실시간 위치"><i></i><span>ISS</span></button>
+      <button class="mini" id="storm-btn" type="button" aria-pressed="true" title="지금 활동 중인 태풍·허리케인·사이클론"><i></i><span>태풍</span></button>
+      <button class="mini" id="aurora-btn" type="button" aria-pressed="true" title="NOAA 오로라 예보"><i></i><span>오로라</span></button>
+      <button class="mini" id="tour-btn" type="button" title="지구를 자동으로 둘러보는 시네마틱 투어"><i></i><span>투어</span></button>
     </div>
   </div>
 </div>
-<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 나라·지진·ISS를 누르면 정보</div>
+<div id="toast" hidden><span id="toast-t"></span><button id="toast-x" type="button">취소</button></div>
+<div id="caption" aria-live="polite"><div class="in live" id="cap-l">LIVE</div><div class="in t" id="cap-t"></div><div class="in s" id="cap-s"></div></div>
+<div id="tourhint">화면을 누르면 투어가 끝나요</div>
+<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 나라·지진·ISS·태풍·오로라를 누르면 정보 · 투어로 자동 감상</div>
 
 <aside id="panel" aria-live="polite">
   <div class="p-head">
     <div class="flag" id="p-flag"></div>
     <div class="p-title"><h2 id="p-name"></h2><p id="p-sub"></p></div>
+    <button id="cmp" class="mini" type="button" title="다른 나라와 비교">비교</button>
     <button id="close" type="button" aria-label="패널 닫기">×</button>
   </div>
   <div class="p-body">
@@ -353,10 +392,10 @@ var selGlow=new THREE.LineSegments(selLines.geometry,new THREE.LineBasicMaterial
 selGlow.scale.setScalar(1.002);selLines.renderOrder=selGlow.renderOrder=3;scene.add(selLines,selGlow);
 var arc=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffd9a0,transparent:true,opacity:0.95,depthWrite:false}));arc.renderOrder=4;scene.add(arc);
 var SEOUL={lat:37.57,lng:126.98};
-function arcTo(c){
-  arc.geometry.dispose();
-  if(!c||c.lat==null||c.a2==="KR"){arc.geometry=new THREE.BufferGeometry();return null}
-  var a=ll2v(SEOUL.lat,SEOUL.lng,1),b=ll2v(c.lat,c.lng,1),ang=a.angleTo(b),n=72,pts=new Float32Array((n+1)*3),v=new THREE.Vector3();
+function arcTo(c,from){
+  arc.geometry.dispose();var o=from||SEOUL;
+  if(!c||c.lat==null||(!from&&c.a2==="KR")){arc.geometry=new THREE.BufferGeometry();return null}
+  var a=ll2v(o.lat,o.lng,1),b=ll2v(c.lat,c.lng,1),ang=a.angleTo(b),n=72,pts=new Float32Array((n+1)*3),v=new THREE.Vector3();
   var h=Math.min(0.2,0.02+ang*0.07),sn=Math.sin(ang)||1;
   for(var i=0;i<=n;i++){var u=i/n;
     v.copy(a).multiplyScalar(Math.sin((1-u)*ang)/sn).addScaledVector(b,Math.sin(u*ang)/sn).normalize().multiplyScalar(1.012+h*Math.sin(Math.PI*u));
@@ -438,6 +477,7 @@ function screenDist(v,x,y,r){
 function pick(x,y){
   var r=renderer.domElement.getBoundingClientRect();
   if(issGroup.visible&&issPos&&screenDist(issSprite.position,x,y,r)<30){openISS();return}
+  if(stormGroup.visible){for(var si=0;si<STORMS.length;si++){if(screenDist(STORMS[si].v,x,y,r)<36){openStorm(STORMS[si]);return}}}
   if(quakePts.visible&&QUAKES.length){
     var best=null,bd=22;
     QUAKES.forEach(function(q){var d=screenDist(q.v,x,y,r);if(d<bd){bd=d;best=q}});
@@ -446,6 +486,7 @@ function pick(x,y){
   ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
   if(!ray.ray.intersectSphere(sphere,hit))return;
   var lat=Math.asin(Math.max(-1,Math.min(1,hit.y)))*R2D,lon=Math.atan2(-hit.z,hit.x)*R2D;
+  if(aurora.visible&&AUR&&!cmpBase){var av=aurAt(lat,lon);if(av>=15&&ll2v(lat,lon,1).dot(sunDir)<0.15){openAurora(lat,lon,av);return}}
   var f=findCountry(lat,lon);if(f)select(f,true);
 }
 
@@ -469,6 +510,12 @@ function row(l,v){var r=el("div","row");r.appendChild(el("span",null,l));r.appen
 function link(label,href){var a=el("a",null,label);a.href=href;a.target="_blank";a.rel="noopener";return a}
 
 function renderFx(c){
+  renderFx0(c);
+  if(!c||!FXH||!FXH.rates)return;
+  var code=c.a2==="KR"?"USD":(c.cur||[]).filter(function(k){return k!=="KRW"&&FXH.rates[k]})[0];
+  if(code)$("p-fx").appendChild(spark(code));
+}
+function renderFx0(c){
   var box=$("p-fx"),chip=$("fx-chip");box.textContent="";
   chip.className="chip"+(ratesLive?" live":"");
   if(!rates){chip.textContent="연결 안 됨";box.appendChild(el("div","note","환율 데이터를 불러오지 못했어요."));return}
@@ -585,6 +632,8 @@ function tickPanel(){
 
 function select(f,fly){
   var c=COUNTRIES[f.id]||null,name=c?c.ko:f.properties.name,en=c?c.en:f.properties.name;
+  if(cmpBase&&c&&c.a2!==cmpBase.a2){var base=cmpBase;cmpBase=null;$("toast").hidden=true;openCompare(base,c,f);return}
+  $("cmp").hidden=!c;$("p-flag").style.fontSize="";
   current={f:f,c:c};alt=null;$("alt").hidden=true;$("cty").hidden=false;
   $("p-flag").textContent=c?c.flag:"";$("p-name").textContent=name;
   $("p-sub").textContent=en+(c&&c.cap?" · 수도 "+c.cap:"");
@@ -651,7 +700,8 @@ $("quake-btn").addEventListener("click",function(){quakePts.visible=!quakePts.vi
 
 function openAlt(title,sub,dotClass,dotColor){
   current=null;$("cty").hidden=true;var a=$("alt");a.hidden=false;a.textContent="";
-  var f=$("p-flag");f.textContent="";var d=el("span","qdot"+(dotClass?" "+dotClass:""));if(dotColor)d.style.background="radial-gradient(circle,"+dotColor+" 0 34%,transparent 36%),radial-gradient(circle,"+dotColor+"55 0 70%,transparent 72%)";f.appendChild(d);
+  $("cmp").hidden=true;
+  var f=$("p-flag");f.textContent="";f.style.fontSize="";var d=el("span","qdot"+(dotClass?" "+dotClass:""));if(dotColor)d.style.background="radial-gradient(circle,"+dotColor+" 0 34%,transparent 36%),radial-gradient(circle,"+dotColor+"55 0 70%,transparent 72%)";f.appendChild(d);
   $("p-name").textContent=title;$("p-sub").textContent=sub;
   selLines.geometry=selGlow.geometry=new THREE.BufferGeometry();arcTo(null);
   panel.classList.add("open");panel.querySelector(".p-body").scrollTop=0;resize();
@@ -772,6 +822,274 @@ function tickISS(){
   r.appendChild(row("지구 한 바퀴","약 92분"));
 }
 
+var BYA2={};Object.keys(COUNTRIES).forEach(function(k){BYA2[COUNTRIES[k].a2]=COUNTRIES[k]});
+function fly(lon,lat){if(reduceMotion){cam.lon=lon;cam.lat=Math.max(-70,Math.min(70,lat));clampCam()}else target={lon:lon,lat:Math.max(-70,Math.min(70,lat))}}
+function llText(lat,lon){return Math.abs(lat).toFixed(1)+"°"+(lat>=0?"N":"S")+" "+Math.abs(lon).toFixed(1)+"°"+(lon>=0?"E":"W")}
+function kmFromSeoul(lat,lon){return ll2v(SEOUL.lat,SEOUL.lng,1).angleTo(ll2v(lat,lon,1))*6371}
+
+/* ---------- 태풍 ---------- */
+var STORMS=[],stormAt=null,stormGroup=new THREE.Group();scene.add(stormGroup);
+var stormTex=(function(){
+  var cv=document.createElement("canvas");cv.width=cv.height=128;var g=cv.getContext("2d");g.translate(64,64);
+  var gr=g.createRadialGradient(0,0,0,0,0,62);gr.addColorStop(0,"rgba(255,255,255,.95)");gr.addColorStop(.2,"rgba(255,150,200,.5)");gr.addColorStop(1,"rgba(255,95,162,0)");
+  g.fillStyle=gr;g.beginPath();g.arc(0,0,62,0,7);g.fill();
+  g.strokeStyle="rgba(255,255,255,.92)";g.lineCap="round";g.lineWidth=5;
+  for(var arm=0;arm<3;arm++){g.beginPath();for(var k=0;k<=36;k++){var a=arm*2.094+k*0.12,r=5+k*1.35,x=Math.cos(a)*r,y=Math.sin(a)*r;if(k)g.lineTo(x,y);else g.moveTo(x,y)}g.globalAlpha=.9;g.stroke()}
+  return new THREE.CanvasTexture(cv);
+})();
+function gcLine(pts,r){
+  var out=[];
+  for(var i=0;i<pts.length-1;i++){
+    var a=ll2v(pts[i][1],pts[i][0],1),b=ll2v(pts[i+1][1],pts[i+1][0],1),ang=a.angleTo(b),n=Math.max(1,Math.ceil(ang/0.015)),sn=Math.sin(ang)||1;
+    for(var k=0;k<n;k++){var u=k/n,v=ang<1e-6?a.clone():a.clone().multiplyScalar(Math.sin((1-u)*ang)/sn).addScaledVector(b,Math.sin(u*ang)/sn);out.push(v.normalize().multiplyScalar(r))}
+  }
+  if(pts.length)out.push(ll2v(pts[pts.length-1][1],pts[pts.length-1][0],r));
+  return out;
+}
+function stormKind(s){
+  var lon=s.pos[0],lat=s.pos[1];
+  if(s.wind<118)return s.wind>=63?"열대폭풍":"열대저압부";
+  if(lat>=0&&lon>=100)return "태풍";
+  if(lat>=0&&(lon<=-20||lon>=170))return "허리케인";
+  return "사이클론";
+}
+function stormGrade(w){return w>=250?"초강력":w>=185?"매우 강함":w>=150?"강함":w>=118?"중간":w>=63?"약함":"약함 (저기압)"}
+function setStorms(j){
+  while(stormGroup.children.length){var o=stormGroup.children.pop();if(o.geometry)o.geometry.dispose()}
+  STORMS=((j&&j.items)||[]).filter(function(s){return s.pos&&s.pos.length===2});stormAt=j&&j.at;
+  STORMS.forEach(function(sm){
+    if(sm.past&&sm.past.length>1){var l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(gcLine(sm.past,1.006)),new THREE.LineBasicMaterial({color:0xff9ccb,transparent:true,opacity:.95,depthWrite:false}));l.renderOrder=5;stormGroup.add(l)}
+    if(sm.fc&&sm.fc.length>1){var l2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(gcLine(sm.fc,1.006)),new THREE.LineDashedMaterial({color:0xffffff,dashSize:0.012,gapSize:0.009,transparent:true,opacity:.8,depthWrite:false}));l2.computeLineDistances();l2.renderOrder=5;stormGroup.add(l2)}
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:stormTex,transparent:true,depthWrite:false,depthTest:false}));sp.renderOrder=6;
+    sm.v=ll2v(sm.pos[1],sm.pos[0],1.01);sp.position.copy(sm.v);sm.sprite=sp;stormGroup.add(sp);
+  });
+  $("storm-btn").lastChild.textContent="태풍 "+STORMS.length;
+}
+getJSON("data/storms.json?v="+Math.floor(Date.now()/600000)).then(setStorms).catch(function(){});
+$("storm-btn").addEventListener("click",function(){stormGroup.visible=!stormGroup.visible;this.setAttribute("aria-pressed",stormGroup.visible?"true":"false")});
+function dateK(s){var d=new Date(s+(/Z$/.test(s)?"":"Z"));return isNaN(d)?"":(d.getUTCMonth()+1)+"/"+d.getUTCDate()}
+function openStorm(sm){
+  alt={type:"storm",s:sm};var kind=stormKind(sm);
+  var a=openAlt(kind+" "+sm.name,kind==="태풍"?"북서태평양":kind==="허리케인"?"대서양·동태평양":kind==="사이클론"?"인도양·남반구":"열대 저기압","storm");
+  var s1=sec(a,"현재 강도",stormAt?"GDACS · "+ago(stormAt)+" 업데이트":"GDACS",!!stormAt&&Date.now()-new Date(stormAt)<90*60000);
+  s1.appendChild(el("div","big",nf(sm.wind,0)+" km/h"));
+  s1.appendChild(el("div","sub","최대 풍속 · 강도 "+stormGrade(sm.wind)));
+  var s2=sec(a,"상세"),r=el("div","rows");s2.appendChild(r);
+  r.appendChild(row("현재 위치",llText(sm.pos[1],sm.pos[0])));
+  r.appendChild(row("서울에서","약 "+nf(Math.round(kmFromSeoul(sm.pos[1],sm.pos[0])/10)*10,0)+" km"));
+  if(sm.from)r.appendChild(row("발생~최근 관측",dateK(sm.from)+" ~ "+dateK(sm.to)));
+  var cs=(sm.countries||[]).map(function(a2){return BYA2[a2]?BYA2[a2].ko:a2});
+  r.appendChild(row("영향 지역",cs.length?cs.join(", "):"육지 영향 없음"));
+  r.appendChild(row("경로",(sm.past&&sm.past.length>1?"지나온 길(분홍)":"")+(sm.fc&&sm.fc.length>1?" · 예상 진로(점선)":"")||"정보 없음"));
+  var s3=sec(a,"더 보기"),l=el("div","links");l.appendChild(link("GDACS 상세 보고서",sm.url));s3.appendChild(l);
+  s3.appendChild(el("div","note","강도 구분은 최대 풍속을 기준으로 한 대략적인 분류예요. 정확한 예보는 각국 기상청 발표를 확인하세요."));
+  fly(sm.pos[0],sm.pos[1]);
+}
+
+/* ---------- 오로라 ---------- */
+var AUR=null;
+var aurMat=new THREE.ShaderMaterial({
+  uniforms:{map:{value:null},sunDir:{value:sunDir},time:{value:0}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:"varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:[
+  "uniform sampler2D map;uniform vec3 sunDir;uniform float time;varying vec3 vP;",
+  "void main(){",
+  " vec3 p=normalize(vP);float lat=degrees(asin(clamp(p.y,-1.0,1.0)));float lon=degrees(atan(-p.z,p.x));float l=mod(lon+360.0,360.0);",
+  " float v=texture2D(map,vec2((l+0.5)/360.0,(lat+90.5)/181.0)).r*255.0;",
+  " float a=smoothstep(2.0,30.0,v);if(a<0.004)discard;",
+  " float rl=radians(l);",
+  " float curtain=0.8+0.2*sin(rl*90.0+time*0.6+3.0*sin(rl*9.0+time*0.2))*(0.7+0.3*sin(radians(lat)*28.0-time*0.5));",
+  " vec3 col=mix(vec3(0.22,1.0,0.52),vec3(0.9,0.3,0.78),smoothstep(45.0,85.0,v));",
+  " float night=1.0-smoothstep(-0.2,0.18,dot(p,sunDir));",
+  " gl_FragColor=vec4(col*a*curtain*(0.18+1.0*night),1.0);",
+  "}"].join("\n")
+});
+var aurora=new THREE.Mesh(new THREE.SphereGeometry(1.016,180,90),aurMat);aurora.renderOrder=4;aurora.visible=false;scene.add(aurora);
+var aurOn=true;
+function aurAt(lat,lon){if(!AUR)return 0;var y=Math.round(lat)+90,x=((Math.round(lon)%360)+360)%360;return AUR.grid[y*360+x]||0}
+function aurEdge(north){ // 확률 10% 이상이 닿는 가장 낮은 위도
+  if(!AUR)return null;var best=null;
+  for(var y=0;y<181;y++){var lat=y-90;if(north?lat<=0:lat>=0)continue;
+    for(var x=0;x<360;x++)if(AUR.grid[y*360+x]>=10){if(best==null||(north?lat<best:lat>best))best=lat;break}}
+  return best;
+}
+function aurBest(){
+  if(!AUR)return null;var best=null;
+  for(var y=0;y<181;y++){var lat=y-90;if(Math.abs(lat)<45)continue;
+    for(var x=0;x<360;x+=2){var v=AUR.grid[y*360+x];if(v<5)continue;var lon=x>180?x-360:x;
+      var score=v*(ll2v(lat,lon,1).dot(sunDir)<0?1:0.3)*(lat>0?1.15:1);
+      if(!best||score>best.score)best={lat:lat,lon:lon,v:v,score:score}}}
+  return best;
+}
+function kpLabel(k){return k>=9?"G5 극한 폭풍":k>=8?"G4 매우 강한 폭풍":k>=7?"G3 강한 폭풍":k>=6?"G2 중간 폭풍":k>=5?"G1 약한 폭풍":k>=4?"활발":"조용"}
+getJSON("data/aurora.json?v="+Math.floor(Date.now()/600000)).then(function(j){
+  if(!j||!j.b64)return;var bin=atob(j.b64),g=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)g[i]=bin.charCodeAt(i);
+  var tx=new THREE.DataTexture(g,360,181,THREE.LuminanceFormat,THREE.UnsignedByteType);
+  tx.magFilter=tx.minFilter=THREE.LinearFilter;tx.wrapS=THREE.RepeatWrapping;tx.needsUpdate=true;
+  aurMat.uniforms.map.value=tx;AUR={grid:g,kp:j.kp,fc:j.fc,obs:j.obs,at:j.at};aurora.visible=aurOn;
+  if(j.kp!=null)$("aurora-btn").lastChild.textContent="오로라 Kp"+(+j.kp).toFixed(0);
+}).catch(function(){});
+$("aurora-btn").addEventListener("click",function(){aurOn=!aurOn;aurora.visible=aurOn&&!!AUR;this.setAttribute("aria-pressed",aurOn?"true":"false")});
+function openAurora(lat,lon,v){
+  alt={type:"aurora"};
+  var a=openAlt("오로라",llText(lat,lon)+" 부근 하늘","aur");
+  var s1=sec(a,"이 지점",AUR.fc?"NOAA 예보 · "+ago(AUR.fc):"NOAA",!!AUR.fc&&Math.abs(Date.now()-new Date(AUR.fc))<90*60000);
+  s1.appendChild(el("div","big",v+"%"));s1.appendChild(el("div","sub","오로라가 보일 가능성 (하늘이 어둡고 맑을 때)"));
+  var s2=sec(a,"지자기 활동"),r=el("div","rows");s2.appendChild(r);
+  if(AUR.kp!=null)r.appendChild(row("Kp 지수",(+AUR.kp).toFixed(1)+" · "+kpLabel(+AUR.kp)));
+  var n=aurEdge(true),s_=aurEdge(false);
+  if(n!=null)r.appendChild(row("북반구","북위 "+n+"°까지"));
+  if(s_!=null)r.appendChild(row("남반구","남위 "+Math.abs(s_)+"°까지"));
+  s2.appendChild(el("div","note","Kp 지수가 높을수록 오로라가 더 낮은 위도까지 내려와요. 한국(북위 33~38°)에서 보이는 일은 매우 드물어요."));
+  var s3=sec(a,"더 보기"),l=el("div","links");l.appendChild(link("NOAA 오로라 예보","https://www.swpc.noaa.gov/products/aurora-30-minute-forecast"));s3.appendChild(l);
+  fly(lon,Math.max(-62,Math.min(62,lat)));
+}
+
+/* ---------- 두 나라 비교 ---------- */
+var cmpBase=null;
+function toast(msg){$("toast-t").textContent=msg;$("toast").hidden=false}
+$("toast-x").addEventListener("click",function(){cmpBase=null;$("toast").hidden=true});
+$("cmp").addEventListener("click",function(){if(!current||!current.c)return;cmpBase=current.c;toast(cmpBase.ko+"와(과) 비교할 나라를 누르거나 검색하세요")});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&cmpBase){cmpBase=null;$("toast").hidden=true}});
+function wxGet(c){
+  var hit=wxCache[c.a2];if(hit&&Date.now()-hit.t<600000)return Promise.resolve(hit.w);
+  return getJSON("https://api.open-meteo.com/v1/forecast?latitude="+c.lat+"&longitude="+c.lng+"&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m").then(function(j){if(!j.current)throw 0;wxCache[c.a2]={t:Date.now(),w:j.current};return j.current});
+}
+function cmpGrid(parent,A,B,rows){
+  var g=el("div","cmp");g.appendChild(el("span",null,""));g.appendChild(el("div","h",A.flag+" "+A.ko));g.appendChild(el("div","h",B.flag+" "+B.ko));
+  rows.forEach(function(r){g.appendChild(el("span",null,r[0]));var x=el("b",r[3]||null,r[1]);if(r[4])x.id=r[4];g.appendChild(x);var y=el("b",r[3]||null,r[2]);if(r[5])y.id=r[5];g.appendChild(y)});
+  parent.appendChild(g);return g;
+}
+function hm24(tz){try{return new Intl.DateTimeFormat("ko-KR",{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date())}catch(_){return "-"}}
+function openCompare(A,B,fB){
+  alt={type:"cmp",A:A,B:B};
+  var a=openAlt(A.ko+" vs "+B.ko,"두 나라 한눈에 비교");
+  var fl=$("p-flag");fl.textContent=A.flag+B.flag;fl.style.fontSize="24px";
+  var lines=[];fB.polys.forEach(function(p){p.forEach(function(r){lines.push(r)})});
+  selLines.geometry.dispose();selLines.geometry=selGlow.geometry=lineGeom(lines,1.003);
+  var km=arcTo(B,{lat:A.lat,lng:A.lng});
+  var s1=sec(a,"지금 시각","실시간",true);
+  cmpGrid(s1,A,B,[["현지",hm24(A.tz),hm24(B.tz),null,"cmp-ta","cmp-tb"],["낮/밤",dayNight(A.lat,A.lng),dayNight(B.lat,B.lng),"t","cmp-da","cmp-db"]]);
+  var oa=tzOff(A.tz),ob=tzOff(B.tz);
+  if(oa!=null&&ob!=null){var d=ob-oa,r0=el("div","rows");r0.appendChild(row("시차",d===0?"같은 시간":B.ko+"가 "+hm(Math.abs(d))+(d>0?" 빠름":" 느림")));s1.appendChild(r0)}
+  var s2=sec(a,"거리와 이동"),r=el("div","rows");s2.appendChild(r);
+  if(km!=null){
+    r.appendChild(row((A.cap||A.ko)+" → "+(B.cap||B.ko),"약 "+nf(Math.round(km/10)*10,0)+" km"));
+    var h=km/820+0.6;r.appendChild(row("비행시간 (직항 가정)","약 "+hm(Math.round(h*60/5)*5)));
+  }
+  var s3=sec(a,"환율",ratesLive?"실시간":"",ratesLive);
+  var ca=(A.cur||[])[0],cb=(B.cur||[])[0];
+  if(rates&&ca&&cb&&rates[ca]&&rates[cb]){
+    var r3=el("div","rows");s3.appendChild(r3);
+    if(ca!==cb){var x=rates[cb]/rates[ca];r3.appendChild(row("1 "+ca,nf(x,x<10?4:2)+" "+cb));var y=rates[ca]/rates[cb];r3.appendChild(row("1 "+cb,nf(y,y<10?4:2)+" "+ca))}
+    else r3.appendChild(row("통화","둘 다 "+ca+" · "+curName(ca)));
+    var kr=function(code){if(code==="KRW")return "-";var per=rates.KRW/rates[code],u=per<0.02?1000:(per<2||code==="JPY"?100:1);return nf(u,0)+" "+code+" = "+nf(per*u,per*u<10?2:0)+"원"};
+    cmpGrid(s3,A,B,[["원화로",kr(ca),kr(cb)]]);
+  }else s3.appendChild(el("div","note","두 나라 통화의 환율 정보가 없어요."));
+  var s4=sec(a,"날씨","불러오는 중",false);
+  cmpGrid(s4,A,B,[["기온","…","…",null,"cmp-wa","cmp-wb"],["하늘","…","…","t","cmp-sa","cmp-sb"]]);
+  [[A,"a"],[B,"b"]].forEach(function(p){
+    if(p[0].lat==null)return;
+    wxGet(p[0]).then(function(w){if(!alt||alt.type!=="cmp")return;$("cmp-w"+p[1]).textContent=nf(w.temperature_2m,1)+"°C";$("cmp-s"+p[1]).textContent=WMO[w.weather_code]||"-";var ch=s4.querySelector(".chip");ch.className="chip live";ch.textContent="실시간"})
+      .catch(function(){if(!alt||alt.type!=="cmp")return;$("cmp-w"+p[1]).textContent="-";$("cmp-s"+p[1]).textContent="연결 안 됨";var ch=s4.querySelector(".chip");ch.textContent="연결 안 됨"});
+  });
+  var s5=sec(a,"기본 정보");
+  var lang=function(c){return (c.lg||[]).slice(0,2).map(function(l){var n=null;try{n=langNames&&langNames.of(l[0])}catch(_){}return (n&&n!==l[0])?n:l[1]}).join(", ")||"-"};
+  cmpGrid(s5,A,B,[["면적",A.ar?nf(A.ar,0)+" km²":"-",B.ar?nf(B.ar,0)+" km²":"-"],["언어",lang(A),lang(B),"t"],["지역",REG[A.rg]||A.rg||"-",REG[B.rg]||B.rg||"-","t"]]);
+  if(A.ar&&B.ar){var ratio=B.ar/A.ar;s5.appendChild(el("div","note",B.ko+" 면적은 "+A.ko+"의 "+(ratio>=1?nf(ratio,ratio<10?1:0)+"배":"약 "+nf(ratio*100,ratio<0.1?1:0)+"%")+"예요."))}
+  var s6=sec(a,"다시 고르기"),l=el("div","links");
+  var b1=el("a",null,A.ko+"와(과) 다른 나라 비교");b1.href="#";b1.addEventListener("click",function(e){e.preventDefault();cmpBase=A;toast(A.ko+"와(과) 비교할 나라를 누르거나 검색하세요")});l.appendChild(b1);s6.appendChild(l);
+  var va=ll2v(A.lat,A.lng,1),vb=ll2v(B.lat,B.lng,1),m=va.add(vb).normalize();
+  fly(Math.atan2(-m.z,m.x)*R2D,Math.asin(m.y)*R2D);
+  if(km>7000)cam.dist=Math.max(cam.dist,fitDist*1.1);
+}
+function dayNight(lat,lon){if(lat==null)return "-";var rs=sunLL(Date.now()),alt_=Math.asin(Math.max(-1,Math.min(1,ll2v(lat,lon,1).dot(ll2v(rs.lat,rs.lon,1)))))*R2D;return alt_>0?"낮":alt_>-6?"해질녘·새벽":"밤"}
+function tickCmp(){if(!alt||alt.type!=="cmp")return;var ta=$("cmp-ta"),tb=$("cmp-tb");if(ta)ta.textContent=hm24(alt.A.tz);if(tb)tb.textContent=hm24(alt.B.tz)}
+
+/* ---------- 환율 30일 그래프 ---------- */
+var FXH=null;
+getJSON("data/fxhist.json?v="+Math.floor(Date.now()/3600000)).then(function(j){FXH=j;if(current&&current.c)renderFx(current.c)}).catch(function(){});
+function spark(code){
+  var vals=FXH.rates[code],dates=FXH.dates,pts=[];
+  for(var i=0;i<vals.length;i++)if(vals[i]!=null)pts.push([i,vals[i]]);
+  var box=el("div","spark");if(pts.length<2)return box;
+  var last=pts[pts.length-1][1],u=last<0.02?1000:(last<2||code==="JPY"?100:1);
+  var lo=Infinity,hi=-Infinity;pts.forEach(function(p){lo=Math.min(lo,p[1]);hi=Math.max(hi,p[1])});
+  var W=300,H=78,pad=4,span=(hi-lo)||hi*0.01,X=function(i){return pad+(W-2*pad)*i/(vals.length-1)},Y=function(v){return pad+(H-2*pad)*(1-(v-lo)/span)};
+  var d=pts.map(function(p,k){return (k?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)}).join(" ");
+  var area=d+" L"+X(pts[pts.length-1][0]).toFixed(1)+" "+H+" L"+X(pts[0][0]).toFixed(1)+" "+H+" Z";
+  var chg=(last/pts[0][1]-1)*100;
+  var top=el("div","top");top.appendChild(el("span",null,"원화 기준 "+nf(u,0)+" "+code+" · 최근 "+vals.length+"영업일"));
+  top.appendChild(el("span","chg",(chg>=0?"+":"")+chg.toFixed(2)+"%"));box.appendChild(top);
+  var NS="http://www.w3.org/2000/svg",svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("role","img");
+  svg.setAttribute("aria-label",code+" 원화 환율 30일 추이, "+(chg>=0?"상승 ":"하락 ")+Math.abs(chg).toFixed(2)+"%");
+  var gid="sg"+code;
+  svg.innerHTML='<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb454" stop-opacity=".32"/><stop offset="1" stop-color="#ffb454" stop-opacity="0"/></linearGradient></defs>'+
+    '<line x1="0" x2="'+W+'" y1="'+Y(hi).toFixed(1)+'" y2="'+Y(hi).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><line x1="0" x2="'+W+'" y1="'+Y(lo).toFixed(1)+'" y2="'+Y(lo).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/>'+
+    '<path d="'+area+'" fill="url(#'+gid+')"/><path d="'+d+'" fill="none" stroke="#ffb454" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<circle cx="'+X(pts[pts.length-1][0]).toFixed(1)+'" cy="'+Y(last).toFixed(1)+'" r="3.4" fill="#ffb454" stroke="#03060b" stroke-width="1.5"/>';
+  box.appendChild(svg);
+  var meta=el("div","meta"),md=function(s){var p=s.split("-");return (+p[1])+"/"+(+p[2])};
+  meta.appendChild(el("span",null,md(dates[pts[0][0]])));meta.appendChild(el("span",null,"최저 "+nf(lo*u,lo*u<10?2:1)+" · 최고 "+nf(hi*u,hi*u<10?2:1)+"원"));meta.appendChild(el("span",null,md(dates[pts[pts.length-1][0]])));
+  box.appendChild(meta);box.appendChild(el("div","note","유럽중앙은행 기준환율 (영업일 1회) · 위 실시간 환율과 조금 다를 수 있어요."));
+  return box;
+}
+
+/* ---------- 시네마틱 투어 ---------- */
+var tour=null;
+function landAlong(lon){
+  var lats=[35,25,45,15,52,5,-5,-15,-25,-35,58];
+  for(var d=0;d<=15;d+=3)for(var sg=-1;sg<=1;sg+=2){var L=((lon+sg*d+540)%360)-180;for(var i=0;i<lats.length;i++){var f=findCountry(lats[i],L);if(f)return {lat:lats[i],lon:L,f:f}}if(d===0)break}
+  return {lat:15,lon:lon,f:null};
+}
+function placeLine(p){var c=p.f&&COUNTRIES[p.f.id];return c?c.ko+(c.tz?" · 현지 "+hm24(c.tz):""):""}
+function buildStops(){
+  var st=[],s0=sunLL(Date.now()),wide=Math.max(fitDist*1.12,3.1);
+  st.push({lon:cam.lon,lat:18,dist:wide,hold:4.5,title:"라이브 어스",sub:"지금 이 순간, 살아 있는 지구"});
+  var rise=landAlong(((s0.lon-88+540)%360)-180);
+  st.push({lon:rise.lon,lat:rise.lat,dist:2.0,hold:5,title:"지금 해가 뜨는 곳",sub:placeLine(rise)||"새벽이 밝아오는 바다 위"});
+  st.push({lon:126.98,lat:37.57,dist:1.7,hold:5,title:"서울",sub:"현지 "+hm24("Asia/Seoul")+" · 지금 "+dayNight(37.57,126.98)+(rates&&rates.KRW?" · 1달러 "+nf(rates.KRW,0)+"원":"")});
+  var q24=QUAKES.filter(function(q){return Date.now()-q.time<24*3600e3}).sort(function(a,b){return b.mag-a.mag})[0];
+  if(q24&&quakePts.visible)st.push({lon:q24.lon,lat:q24.lat,dist:1.85,hold:5,title:"규모 "+q24.mag.toFixed(1)+" 지진",sub:(landName(q24.lat,q24.lon)||"바다")+" · "+ago(new Date(q24.time).toISOString())});
+  if(stormGroup.visible)STORMS.slice().sort(function(a,b){return b.wind-a.wind}).slice(0,2).forEach(function(sm){st.push({lon:sm.pos[0],lat:sm.pos[1],dist:1.85,hold:5,title:stormKind(sm)+" "+sm.name,sub:"최대 풍속 "+sm.wind+" km/h · 강도 "+stormGrade(sm.wind)})});
+  if(AUR&&aurora.visible){var b=aurBest();if(b)st.push({lon:b.lon,lat:b.lat>0?Math.min(64,b.lat-6):Math.max(-64,b.lat+6),dist:2.15,hold:6,title:"오로라",sub:(b.lat>0?"북":"남")+"극권 밤하늘"+(AUR.kp!=null?" · Kp "+(+AUR.kp).toFixed(1):"")})}
+  if(issPos&&issGroup.visible)st.push({follow:"iss",dist:1.65,hold:9,title:"국제우주정거장",sub:"",dyn:function(){var ln=issPos&&landName(issPos.lat,issPos.lon);return (ln?ln+" 상공":"바다 위")+" · 시속 "+nf(issPos.vel,0)+" km"}});
+  var set=landAlong(((s0.lon+88+540)%360)-180);
+  st.push({lon:set.lon,lat:set.lat,dist:2.0,hold:5,title:"지금 해가 지는 곳",sub:placeLine(set)||"노을이 지는 바다 위"});
+  st.push({lon:set.lon+50,lat:12,dist:wide,hold:5.5,title:"라이브 어스",sub:"jw82-ops.github.io/live-earth"});
+  return st;
+}
+function showCaption(S){$("cap-t").textContent=S.title;$("cap-s").textContent=S.dyn?S.dyn():S.sub;$("caption").classList.add("show")}
+function hideCaption(){$("caption").classList.remove("show")}
+function startTour(){
+  if(panel.classList.contains("open"))$("close").click();
+  cmpBase=null;$("toast").hidden=true;setShift(0);target=null;q.blur();qList.classList.remove("on");
+  document.body.classList.add("touring");$("cap-l").textContent="LIVE · UTC "+new Date().toISOString().slice(11,16);
+  tour={stops:buildStops(),i:0,phase:"fly",t:0,dur:0,cap:0,from:{lon:cam.lon,lat:cam.lat,dist:cam.dist}};
+}
+function stopTour(){tour=null;hideCaption();document.body.classList.remove("touring");lastTouch=performance.now();cam.vLon=cam.vLat=0}
+$("tour-btn").addEventListener("click",function(e){e.stopPropagation();startTour()});
+window.addEventListener("pointerdown",function(e){if(tour&&!e.target.closest("#tour-btn")){stopTour();e.stopPropagation();e.preventDefault()}},true);
+window.addEventListener("keydown",function(e){if(tour&&(e.key==="Escape"||e.key===" ")){stopTour()}});
+function tourUpdate(dt){
+  var S=tour.stops[tour.i];tour.t+=dt;
+  var goal=S.follow==="iss"&&issPos?{lon:issPos.lon,lat:Math.max(-65,Math.min(65,issPos.lat))}:{lon:S.lon,lat:S.lat};
+  if(tour.phase==="fly"){
+    var dl=((goal.lon-tour.from.lon)%360+540)%360-180,dla=goal.lat-tour.from.lat,ang=Math.hypot(dl*Math.cos(goal.lat*D2R),dla);
+    if(!tour.dur)tour.dur=reduceMotion?0.01:Math.min(5.2,2.4+ang/55);
+    var u=Math.min(1,tour.t/tour.dur),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,hop=Math.min(1.25,ang/110);
+    cam.lon=tour.from.lon+dl*e;cam.lat=tour.from.lat+dla*e;cam.dist=tour.from.dist+(S.dist-tour.from.dist)*e+hop*Math.sin(Math.PI*e);
+    if(u>=0.8&&!tour.cap){tour.cap=1;showCaption(S)}
+    if(u>=1){tour.phase="hold";tour.t=0}
+  }else{
+    if(S.follow==="iss"){cam.lon=goal.lon;cam.lat=goal.lat}else cam.lon+=dt*1.1;
+    cam.dist+=(S.dist*0.93-cam.dist)*dt*0.09;
+    if(S.dyn)$("cap-s").textContent=S.dyn();
+    if(tour.t>S.hold-1.0&&tour.cap===1){tour.cap=2;hideCaption()}
+    if(tour.t>=S.hold){tour.i=(tour.i+1)%tour.stops.length;if(tour.i===0)tour.stops=buildStops();tour.from={lon:cam.lon,lat:cam.lat,dist:cam.dist};tour.phase="fly";tour.t=0;tour.dur=0;tour.cap=0}
+  }
+}
+
 /* ---------- 앱으로 설치 (홈 화면) ---------- */
 if("serviceWorker" in navigator&&/github\.io$/.test(location.hostname)){try{navigator.serviceWorker.register("sw.js").catch(function(){})}catch(_){}}
 
@@ -779,10 +1097,11 @@ if("serviceWorker" in navigator&&/github\.io$/.test(location.hostname)){try{navi
 var clockEl=$("clock"),lastSec=-1,lastT=performance.now();
 function frame(t){
   requestAnimationFrame(frame);
-  var dt=Math.min(0.05,(t-lastT)/1000);lastT=t;
+  var rdt=Math.max(0,(t-lastT)/1000),dt=Math.min(0.05,rdt);lastT=t;
   var now=Date.now(),s=sunLL(now+shiftMin*60000);sunDir.copy(ll2v(s.lat,s.lon,1));
   if(cloudMat.uniforms.useMap.value<0.5)cloudMat.uniforms.t.value+=dt*0.004;if(window.__sun)window.__sun.position.copy(sunDir).multiplyScalar(110);
-  if(pcount()===0){
+  if(tour){tourUpdate(Math.min(0.25,rdt));clampCam()}
+  else if(pcount()===0){
     if(target){
       var dl=((target.lon-cam.lon)%360+540)%360-180,k=1-Math.exp(-dt*4.5);
       cam.lon+=dl*k;cam.lat+=(target.lat-cam.lat)*k;
@@ -798,16 +1117,19 @@ function frame(t){
   else if(issLive){issPos=issLive}
   if(issPos){issSprite.position.copy(issPos.v);var ps=0.055*(cam.dist-0.6)*(1+0.12*Math.sin(t/300));issSprite.scale.set(ps,ps,1)}
   issSprite.visible=!!issPos;
+  aurMat.uniforms.time.value=t/1000;
+  for(var sj=0;sj<STORMS.length;sj++){var sm=STORMS[sj];sm.sprite.material.rotation+=dt*(sm.pos[1]>=0?1.4:-1.4);var ss=0.055*(cam.dist-0.6);sm.sprite.scale.set(ss,ss,1);sm.sprite.visible=!hidden(sm.v)}
   camera.position.copy(ll2v(cam.lat,cam.lon,cam.dist));camera.up.set(0,1,0);camera.lookAt(0,0,0);
   renderer.render(scene,camera);
   var sec=Math.floor(now/1000);
   if(sec!==lastSec){lastSec=sec;var d=new Date(now);
     clockEl.textContent=(shiftMin?"시간 이동 "+(shiftMin>0?"+":"−")+hm(Math.abs(shiftMin))+" → UTC "+new Date(now+shiftMin*60000).toISOString().slice(11,16):"UTC "+d.toISOString().slice(11,19))+" · 태양 직하점 "+Math.abs(s.lat).toFixed(1)+"°"+(s.lat>=0?"N":"S")+" "+Math.abs(s.lon).toFixed(1)+"°"+(s.lon>=0?"E":"W");
-    tickPanel();tickISS();}
+    tickPanel();tickISS();tickCmp();
+    if(tour)$("cap-l").textContent="LIVE · UTC "+d.toISOString().slice(11,16);}
 }
 resize();
 var kr=null;for(var i=0;i<features.length;i++)if(features[i].id==="410"){kr=features[i];break}
-if(kr){select(kr,false);cam.lon=127;cam.lat=30}
+if(kr){if(innerWidth>720)select(kr,false);cam.lon=127;cam.lat=30}
 requestAnimationFrame(frame);
 })();
 </script>

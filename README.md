@@ -1,5 +1,7 @@
 # 라이브 어스
 
+주소: https://jw82-ops.github.io/live-earth/
+
 실시간으로 낮과 밤이 바뀌는 3D 지구. 나라를 누르면 현지 시각, 기본 정보, 환율, 날씨, 최신 기사, 음악 링크를 보여준다.
 
 ## 데이터가 오는 곳
@@ -12,6 +14,9 @@
 | 최신 기사 | Google 뉴스 RSS → `data/news.json` | GitHub Actions가 매시간 받아서 바로 배포 |
 | 지진 | USGS (브라우저에서 직접, 실패 시 `data/quakes.json`) | 5분마다 |
 | 국제우주정거장 | Celestrak 궤도 요소 → `data/iss.json`, 위치는 브라우저에서 satellite.js로 계산 | 궤도는 매시간, 위치는 매 순간 |
+| 태풍·허리케인 | GDACS → `data/storms.json` (현재 위치, 지나온 길, 예상 진로) | 매시간 |
+| 오로라 | NOAA OVATION 예보 + Kp 지수 → `data/aurora.json` | 매시간 |
+| 환율 30일 추이 | 유럽중앙은행 기준환율(Frankfurter) → `data/fxhist.json` | 매시간 (영업일 1회 갱신) |
 | 위성 구름 | clouds.matteason.co.uk → `data/clouds.png` | GitHub Actions가 매시간 받아서 바로 배포 |
 
 환율·날씨 서버에 닿지 못하면 `snapshot.js`의 환율과 날씨 검색 링크로 대신한다.
@@ -35,3 +40,10 @@
 - `manifest.webmanifest`, `sw.js`, `icon-*.png`, `apple-touch-icon.png` 홈 화면 앱 설정
 - `og.jpg` 링크 공유 미리보기 이미지
 - `.github/workflows/update-data.yml` 매시간 실행 설정
+
+## 기능 요약
+
+- 나라를 누르면: 현지 시각, 기본 정보, 환율(+30일 그래프), 날씨, 최신 기사, 음악 링크
+- **비교** 버튼: 두 나라의 시각·시차·거리·비행시간·환율·날씨·면적을 나란히
+- 레이어: 구름, 지진, 국제우주정거장(서울 다음 통과 시각), 태풍, 오로라
+- **투어**: 해 뜨는 곳 → 서울 → 큰 지진 → 태풍 → 오로라 → ISS → 해 지는 곳을 자동으로 도는 시네마틱 모드 (화면을 누르면 종료)
