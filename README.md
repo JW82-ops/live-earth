@@ -27,6 +27,8 @@
 | 별·별자리 | `sky.js` (d3-celestial 데이터, BSD-3, 예일 밝은 별 목록 기반) · 행성은 브라우저에서 계산 | 고정 |
 | 지진 1년 | USGS 규모 5 이상 → `data/quakes-year.json` | 하루 한 번 |
 | 산불 | NASA FIRMS (저장소 Secrets에 `FIRMS_KEY`가 있을 때만) → `data/fires.json` | 3시간마다 |
+| 나라 생활·여행 정보 | 비자(passport-index-dataset), 플러그·전압·긴급전화(위키데이터), 인구·GDP(세계은행), 빅맥 지수(The Economist), 공휴일(Nager.Date), 외교부 여행경보(`MOFA_KEY`가 있을 때) → `data/facts.json` | 하루 한 번 |
+| 7일 예보·위키백과 요약 | Open-Meteo, Wikipedia REST (브라우저에서 직접) | 나라를 누를 때 |
 | 위성 구름 | clouds.matteason.co.uk → `data/clouds.png` | GitHub Actions가 매시간 받아서 바로 배포 |
 
 환율·날씨 서버에 닿지 못하면 `snapshot.js`의 환율과 날씨 검색 링크로 대신한다.
@@ -68,3 +70,9 @@
 ## 무료 API 호출 한도
 
 Open-Meteo 무료 한도(하루 1만 회)를 넘지 않도록 미세먼지는 3시간, 바람은 6시간마다만 새로 받고 그 사이에는 이전 값을 재사용한다.
+
+## 외교부 여행경보 켜기
+
+1. https://www.data.go.kr 에서 회원가입 후 "외교부_국가·지역별 여행경보" 오픈 API 활용신청 (자동 승인)
+2. 마이페이지의 일반 인증키(Decoding)를 복사
+3. 저장소 Secrets에 `MOFA_KEY`로 저장 → 다음 실행부터 나라 패널에 여행경보 단계가 표시됨
