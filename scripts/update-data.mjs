@@ -315,6 +315,78 @@ async function updateMagazines(prev) {
   return { at: new Date().toISOString(), items };
 }
 
+// 배포된 사이트의 이전 데이터 / 신선도 확인 (무료 API 호출 한도를 아끼기 위해)
+async function prevSite(name) {
+  if (!process.env.SITE_URL) return null;
+  try { return JSON.parse((await get(process.env.SITE_URL + "data/" + name)) || "null"); } catch { return null; }
+}
+const isFresh = (j, hours) => j?.at && Date.now() - new Date(j.at) < hours * 3600e3;
+
+// 전 세계 바람 (Open-Meteo, 7.5도 격자, 6시간마다)
+async function updateWind() {
+  const STEP = 7.5, lat0 = -82.5, nlat = 23, lon0 = -180, nlon = 48, pts = [];
+  for (let y = 0; y < nlat; y++) for (let x = 0; x < nlon; x++) pts.push([lat0 + y * STEP, lon0 + x * STEP]);
+  const u = new Array(pts.length).fill(null), v = new Array(pts.length).fill(null);
+  for (let i = 0; i < pts.length; i += 100) {
+    const b = pts.slice(i, i + 100);
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${b.map((p) => p[0]).join(",")}&longitude=${b.map((p) => p[1]).join(",")}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms`;
+    let j; try { j = JSON.parse(await get(url)); } catch { continue; }
+    (Array.isArray(j) ? j : [j]).forEach((r, k) => {
+      const c = r?.current; if (!c || c.wind_speed_10m == null) return;
+      const sp = c.wind_speed_10m, d = c.wind_direction_10m * Math.PI / 180;
+      u[i + k] = +(-sp * Math.sin(d)).toFixed(1); v[i + k] = +(-sp * Math.cos(d)).toFixed(1);
+    });
+    await sleep(1200);
+  }
+  const ok = u.filter((x) => x != null).length;
+  console.log(`wind: ${ok}/${pts.length}`);
+  return ok > pts.length * 0.8 ? { at: new Date().toISOString(), step: STEP, lat0, nlat, lon0, nlon, u, v } : null;
+}
+
+// 위성 궤도 요소: 스타링크 전체, 우주정거장들, 허블 (Celestrak, 12시간마다)
+async function updateSats() {
+  const parse = (txt) => {
+    const L = (txt || "").split(/\r?\n/).map((l) => l.trimEnd()).filter(Boolean), out = [];
+    for (let i = 0; i + 2 < L.length + 1; i++) if (L[i + 1]?.startsWith("1 ") && L[i + 2]?.startsWith("2 ")) { out.push([L[i].trim(), L[i + 1], L[i + 2]]); i += 2; }
+    return out;
+  };
+  const starlink = parse(await get("https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle"));
+  await sleep(1500);
+  const stations = parse(await get("https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle"));
+  await sleep(1500);
+  const hubble = parse(await get("https://celestrak.org/NORAD/elements/gp.php?CATNR=20580&FORMAT=tle"));
+  console.log(`sats: starlink ${starlink.length}, stations ${stations.length}, hubble ${hubble.length}`);
+  return starlink.length > 100 ? { at: new Date().toISOString(), groups: { starlink, stations, hubble } } : null;
+}
+
+// 최근 1년 규모 5 이상 지진 (USGS, 하루 한 번)
+async function updateQuakesYear() {
+  const start = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
+  let j; try { j = JSON.parse(await get(`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${start}&minmagnitude=5&orderby=time-asc`)); } catch { console.log("quakes-year: unavailable"); return null; }
+  const items = (j?.features || []).map((f) => [+f.geometry.coordinates[0].toFixed(2), +f.geometry.coordinates[1].toFixed(2), Math.round(f.geometry.coordinates[2]), f.properties.mag, Math.round(f.properties.time / 1000), f.properties.place || ""]);
+  console.log(`quakes-year: ${items.length}`);
+  return items.length ? { at: new Date().toISOString(), from: start, items } : null;
+}
+
+// 산불 (NASA FIRMS, 저장소 Secrets에 FIRMS_KEY가 있을 때만, 3시간마다). 0.5도 칸으로 묶어 저장.
+async function updateFires() {
+  const key = process.env.FIRMS_KEY;
+  if (!key) { console.log("fires: no FIRMS_KEY secret, skipped"); return null; }
+  const csv = await get(`https://firms.modaps.eosdis.nasa.gov/api/area/csv/${key}/VIIRS_SNPP_NRT/world/1`);
+  if (!csv || !/latitude/.test(csv.slice(0, 200))) { console.log("fires: unavailable " + (csv || "").slice(0, 120)); return null; }
+  const lines = csv.trim().split(/\r?\n/), head = lines[0].split(","), iLa = head.indexOf("latitude"), iLo = head.indexOf("longitude"), iF = head.indexOf("frp"), iC = head.indexOf("confidence");
+  const cells = new Map();
+  for (let k = 1; k < lines.length; k++) {
+    const c = lines[k].split(","); if (c[iC] === "l" || c[iC] === "low") continue;
+    const la = +c[iLa], lo = +c[iLo]; if (isNaN(la) || isNaN(lo)) continue;
+    const key2 = Math.floor(la * 2) + ":" + Math.floor(lo * 2), cur = cells.get(key2) || [Math.floor(lo * 2) / 2 + 0.25, Math.floor(la * 2) / 2 + 0.25, 0, 0];
+    cur[2]++; cur[3] += +c[iF] || 0; cells.set(key2, cur);
+  }
+  const out = [...cells.values()].map((c) => [c[0], c[1], c[2], Math.round(c[3])]);
+  console.log(`fires: ${lines.length - 1} detections -> ${out.length} cells`);
+  return { at: new Date().toISOString(), cells: out };
+}
+
 async function keepOrPrev(name, fresh) {
   if (fresh) return fresh;
   if (process.env.SITE_URL) {
@@ -333,12 +405,17 @@ if (!prev.items) {
   try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
 }
 
-let prevMag = null;
-if (process.env.SITE_URL) { try { prevMag = JSON.parse((await get(process.env.SITE_URL + "data/magazines.json")) || "null"); } catch {} }
+const [prevMag, prevAir, prevWind, prevSats, prevQY, prevFires] = await Promise.all(["magazines.json", "air.json", "wind.json", "sats.json", "quakes-year.json", "fires.json"].map(prevSite));
+const maybe = (prev, hours, fn, label) => isFresh(prev, hours) ? (console.log(`${label}: reuse (fresh)`), Promise.resolve(prev)) : fn().then((v) => v || prev);
 let [{ items, ok }, clouds, quakes, iss, storms, aurora, fxhist, air, volcanoes, magazines] = await Promise.all([
   updateNews(), updateClouds(), updateQuakes(), updateIss(), updateStorms(), updateAurora(), updateFxHist(),
-  updateAir(), updateVolcanoes(), updateMagazines(prevMag),
+  maybe(prevAir, 2.9, updateAir, "air"), updateVolcanoes(), updateMagazines(prevMag),
 ]);
+const [wind, sats, quakesYear, fires] = await Promise.all([
+  maybe(prevWind, 5.9, updateWind, "wind"), maybe(prevSats, 11.9, updateSats, "sats"),
+  maybe(prevQY, 20, updateQuakesYear, "quakes-year"), maybe(prevFires, 2.9, updateFires, "fires"),
+]);
+for (const [n, v] of [["wind.json", wind], ["sats.json", sats], ["quakes-year.json", quakesYear], ["fires.json", fires]]) if (v) await writeFile(new URL(n, DATA), JSON.stringify(v));
 air = await keepOrPrev("air.json", air);
 volcanoes = await keepOrPrev("volcanoes.json", volcanoes);
 for (const [n, v] of [["air.json", air], ["volcanoes.json", volcanoes], ["magazines.json", magazines]]) if (v) await writeFile(new URL(n, DATA), JSON.stringify(v));
