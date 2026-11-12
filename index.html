@@ -156,6 +156,50 @@ body.touring #caption{display:flex}
 #tourhint{position:fixed;right:16px;top:max(16px,env(safe-area-inset-top));font-size:12px;color:var(--muted);display:none;pointer-events:none}
 body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
 @keyframes fadeaway{0%,70%{opacity:1}100%{opacity:0}}
+#air-btn i{background:#4aa8ff}#volc-btn i{background:#ff6a3d}#flight-btn i{background:#e8f1ff}#moon-btn i{background:#d9d9dc}
+.mag-g{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:6px}
+.mag{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid var(--line)}
+.mag:last-of-type{border-bottom:0}
+.mag a.name{color:var(--ink);font-weight:600;text-decoration:none;font-size:15px}
+.mag a.name::after{content:" ↗";color:var(--sun);font-weight:400}
+.mag small{font-size:12px;color:var(--muted)}
+.mag ul{list-style:none;padding:0;margin:2px 0 0;display:flex;flex-direction:column;gap:5px}
+.mag li{display:flex;flex-direction:column;gap:1px}
+.mag li a{font-size:13px;color:#cfd8e4;text-decoration:none;line-height:1.4}
+.mag li a:hover{text-decoration:underline;text-decoration-color:var(--sun)}
+.overlay{position:fixed;inset:0;background:rgba(2,4,8,.6);display:flex;align-items:center;justify-content:center;z-index:40;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sheet{width:min(440px,100%);max-height:calc(100% - 8px);overflow-y:auto;background:rgba(9,14,23,.97);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.ts-top{display:flex;justify-content:space-between;align-items:center}
+.ts-top h2{font-size:20px;font-weight:600}
+.xbtn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}
+.ts-h3{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.ts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ts-chk{display:flex;align-items:center;gap:6px;font-size:13px;padding:7px 8px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:rgba(255,255,255,.03)}
+.ts-chk input,.ts-row input{accent-color:var(--sun);width:16px;height:16px;margin:0}
+.ts-row{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipx{appearance:none;border:1px solid rgba(255,180,84,.5);background:rgba(255,180,84,.08);color:var(--ink);font:inherit;font-size:13px;border-radius:99px;padding:5px 10px;cursor:pointer}
+.ts-btns{display:flex;flex-direction:column;gap:8px}
+.ts-btns button,.btnlike{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font:inherit;font-size:15px;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:center;text-decoration:none}
+.ts-btns .primary{background:var(--sun);border-color:var(--sun);color:#1a1205;font-weight:600}
+.ts-btns button:disabled{opacity:.4;cursor:default}
+.sheet button:focus-visible,.sheet a:focus-visible,.sheet input:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+#ts-q{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);font:inherit;font-size:14px;padding:0 12px}
+#ts-list{position:absolute;top:42px;left:0;right:0;background:rgba(9,14,23,.98);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:none;flex-direction:column;z-index:5}
+#ts-list.on{display:flex}
+#ts-list button{appearance:none;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:14px;text-align:left;padding:9px 12px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+#ts-list small{color:var(--muted);font-size:12px}
+#rd-v{width:100%;max-height:52vh;border-radius:12px;background:#000}
+#recdot{position:fixed;right:16px;top:max(16px,env(safe-area-inset-top));display:flex;align-items:center;gap:8px;font-size:12px;color:#fff;background:rgba(0,0,0,.55);border-radius:99px;padding:6px 12px;z-index:30;pointer-events:none;font-variant-numeric:tabular-nums}
+#recdot i{width:9px;height:9px;border-radius:50%;background:#ff3b3b;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+body.recording #caption,body.recording #tourhint{visibility:hidden}
+@media (max-width:720px){
+  .layers{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .layers::-webkit-scrollbar{display:none}
+  .layers .mini{flex:none}
+  .ts-grid{grid-template-columns:repeat(2,1fr)}
+}
 @media (max-width:720px){
   #panel{top:auto;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));width:auto;height:54%;transform:translateY(calc(100% + 16px))}
   .hint{display:none}
@@ -183,19 +227,53 @@ body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
       <button class="mini" id="now" type="button" disabled>지금</button>
     </div>
     <div class="layers" role="group" aria-label="지구 위에 표시할 것">
+      <button class="mini" id="tour-btn" type="button" title="지구를 자동으로 둘러보는 시네마틱 투어 · 영상 저장"><i></i><span>투어</span></button>
       <button class="mini" id="cloud" type="button" aria-pressed="true" title="연출용 구름 (실제 구름 아님)"><i></i><span>구름</span></button>
       <button class="mini" id="quake-btn" type="button" aria-pressed="true" title="최근 24시간 규모 2.5 이상 지진"><i></i><span>지진</span></button>
       <button class="mini" id="iss-btn" type="button" aria-pressed="true" title="국제우주정거장 실시간 위치"><i></i><span>ISS</span></button>
       <button class="mini" id="storm-btn" type="button" aria-pressed="true" title="지금 활동 중인 태풍·허리케인·사이클론"><i></i><span>태풍</span></button>
       <button class="mini" id="aurora-btn" type="button" aria-pressed="true" title="NOAA 오로라 예보"><i></i><span>오로라</span></button>
-      <button class="mini" id="tour-btn" type="button" title="지구를 자동으로 둘러보는 시네마틱 투어"><i></i><span>투어</span></button>
+      <button class="mini" id="volc-btn" type="button" aria-pressed="true" title="최근 화산 분화"><i></i><span>화산</span></button>
+      <button class="mini" id="moon-btn" type="button" aria-pressed="true" title="달의 실제 방향과 위상"><i></i><span>달</span></button>
+      <button class="mini" id="air-btn" type="button" aria-pressed="false" title="나라별 초미세먼지 PM2.5"><i></i><span>미세먼지</span></button>
+      <button class="mini" id="flight-btn" type="button" aria-pressed="false" title="지금 보고 있는 지역의 실시간 항공편"><i></i><span>항공편</span></button>
     </div>
   </div>
 </div>
 <div id="toast" hidden><span id="toast-t"></span><button id="toast-x" type="button">취소</button></div>
 <div id="caption" aria-live="polite"><div class="in live" id="cap-l">LIVE</div><div class="in t" id="cap-t"></div><div class="in s" id="cap-s"></div></div>
 <div id="tourhint">화면을 누르면 투어가 끝나요</div>
-<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 나라·지진·ISS·태풍·오로라를 누르면 정보 · 투어로 자동 감상</div>
+<div id="recdot" hidden><i></i><span id="rec-t">REC 0:00</span><span>· 화면을 누르면 저장</span></div>
+<div id="tsheet" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ts-h">
+    <div class="ts-top"><h2 id="ts-h">투어</h2><button id="ts-x" class="xbtn" type="button" aria-label="닫기">×</button></div>
+    <div class="note">지구를 자동으로 날아다니며 지금 일어나는 일을 보여줘요. 체크한 장면만 순서대로 나와요.</div>
+    <div class="ts-h3">장면</div>
+    <div class="ts-grid" id="ts-scenes"></div>
+    <div class="ts-h3">나라 추가 (서울 다음에 나와요, 최대 8개)</div>
+    <div class="search"><input id="ts-q" type="search" placeholder="나라 이름 (예: 프랑스, Italy)" autocomplete="off" aria-label="투어에 넣을 나라 검색"><div id="ts-list"></div></div>
+    <div class="chips" id="ts-chips"></div>
+    <label class="ts-row"><input type="checkbox" id="ts-music">배경음악 · 효과음</label>
+    <div class="ts-btns">
+      <button id="ts-play" class="primary" type="button">▶ 투어 보기</button>
+      <button id="ts-rec-v" type="button">● 세로 영상으로 저장 (9:16 · 숏폼)</button>
+      <button id="ts-rec-h" type="button">● 가로 영상으로 저장 (16:9)</button>
+    </div>
+    <div class="note" id="ts-recnote">영상은 투어 한 바퀴(1~2분)가 끝나면 자동으로 만들어져요. 중간에 화면을 누르면 그때까지 저장돼요. 녹화 중에는 화면을 끄거나 다른 앱으로 넘어가지 마세요.</div>
+  </div>
+</div>
+<div id="recdone" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rd-h">
+    <div class="ts-top"><h2 id="rd-h">영상이 만들어졌어요</h2><button id="rd-x" class="xbtn" type="button" aria-label="닫기">×</button></div>
+    <video id="rd-v" controls playsinline muted loop></video>
+    <div class="note" id="rd-info"></div>
+    <div class="ts-btns">
+      <button id="rd-share" class="primary" type="button">공유 · 사진에 저장</button>
+      <a id="rd-dl" class="btnlike" href="#">파일로 내려받기</a>
+    </div>
+  </div>
+</div>
+<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 지구 위 점·아이콘·달을 누르면 정보 · 투어로 자동 감상과 영상 저장</div>
 
 <aside id="panel" aria-live="polite">
   <div class="p-head">
@@ -224,10 +302,15 @@ body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
     <section>
       <div class="s-head"><h3>날씨</h3><span class="chip" id="wx-chip"></span></div>
       <div id="p-wx"></div>
+      <div id="p-air"></div>
     </section>
     <section>
       <div class="s-head"><h3>최신 뉴스</h3><span class="chip" id="news-chip"></span></div>
       <div class="links" id="p-news"></div>
+    </section>
+    <section>
+      <div class="s-head"><h3>매거진</h3><span class="chip" id="mag-chip"></span></div>
+      <div id="p-mag"></div>
     </section>
     <section>
       <div class="s-head"><h3>음악</h3><span class="chip">YouTube에서 열기</span></div>
@@ -415,8 +498,9 @@ function findCountry(lat,lon){
 
 /* ---------- 카메라·터치 ---------- */
 var cam={lon:127.5,lat:24,dist:3.2,vLon:0,vLat:0}, target=null, fitDist=3, lastTouch=0;
-function clampCam(){cam.lat=Math.max(-85,Math.min(85,cam.lat));cam.dist=Math.max(1.22,Math.min(Math.max(7,fitDist*1.4),cam.dist))}
+function clampCam(){cam.lat=Math.max(-85,Math.min(85,cam.lat));cam.dist=Math.max(1.22,Math.min(Math.max(7,fitDist*1.4,tour?24:0),cam.dist))}
 function resize(){
+  if(rec){layoutRec();return}
   var w=stage.clientWidth||innerWidth,h=stage.clientHeight||innerHeight;
   renderer.setSize(w,h,false);camera.aspect=w/h;
   var narrow=w<=720, ph=(narrow&&panel.classList.contains("open"))?panel.offsetHeight+8:0;
@@ -477,6 +561,9 @@ function screenDist(v,x,y,r){
 function pick(x,y){
   var r=renderer.domElement.getBoundingClientRect();
   if(issGroup.visible&&issPos&&screenDist(issSprite.position,x,y,r)<30){openISS();return}
+  if(moonMesh.visible){var mr=MOON_R/camera.position.distanceTo(moonMesh.position)*(r.height/2)/Math.tan(camera.fov*D2R/2);if(screenDist(moonMesh.position,x,y,r)<Math.max(22,mr*1.1)){openMoon();return}}
+  if(volcGroup.visible){for(var vi=0;vi<VOLC.length;vi++){if(screenDist(VOLC[vi].v,x,y,r)<28){openVolcano(VOLC[vi]);return}}}
+  if(flightOn&&FL.length){var bf=null,bfd=16;FL.forEach(function(f){var d=screenDist(f.v,x,y,r);if(d<bfd){bfd=d;bf=f}});if(bf){openFlight(bf);return}}
   if(stormGroup.visible){for(var si=0;si<STORMS.length;si++){if(screenDist(STORMS[si].v,x,y,r)<36){openStorm(STORMS[si]);return}}}
   if(quakePts.visible&&QUAKES.length){
     var best=null,bd=22;
@@ -486,6 +573,7 @@ function pick(x,y){
   ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
   if(!ray.ray.intersectSphere(sphere,hit))return;
   var lat=Math.asin(Math.max(-1,Math.min(1,hit.y)))*R2D,lon=Math.atan2(-hit.z,hit.x)*R2D;
+  if(airPts.visible&&AIR){var ba=null,bad=16;AIR.items.forEach(function(it){var d=screenDist(it.v,x,y,r);if(d<bad){bad=d;ba=it}});if(ba){openAir(ba);return}}
   if(aurora.visible&&AUR&&!cmpBase){var av=aurAt(lat,lon);if(av>=15&&ll2v(lat,lon,1).dot(sunDir)<0.15){openAurora(lat,lon,av);return}}
   var f=findCountry(lat,lon);if(f)select(f,true);
 }
@@ -639,7 +727,7 @@ function select(f,fly){
   $("p-sub").textContent=en+(c&&c.cap?" · 수도 "+c.cap:"");
   var lines=[];f.polys.forEach(function(p){p.forEach(function(r){lines.push(r)})});
   selLines.geometry.dispose();selLines.geometry=selGlow.geometry=lineGeom(lines,1.003);
-  renderInfo(c,arcTo(c));renderFx(c);renderWx(c);renderNews(c,name,en);tickPanel();
+  renderInfo(c,arcTo(c));renderFx(c);renderWx(c);renderAir(c);renderNews(c,name,en);renderMag(c);tickPanel();
   panel.classList.add("open");panel.querySelector(".p-body").scrollTop=0;resize();
   if(fly){
     var b=f.bbox,lat=c&&c.lat!=null?c.lat:(b[1]+b[3])/2,lon=c&&c.lng!=null?c.lng:(b[0]+b[2])/2;
@@ -949,6 +1037,7 @@ function openAurora(lat,lon,v){
 var cmpBase=null;
 function toast(msg){$("toast-t").textContent=msg;$("toast").hidden=false}
 $("toast-x").addEventListener("click",function(){cmpBase=null;$("toast").hidden=true});
+var _toast=toast;toast=function(m){$("toast-x").textContent="취소";_toast(m)};
 $("cmp").addEventListener("click",function(){if(!current||!current.c)return;cmpBase=current.c;toast(cmpBase.ko+"와(과) 비교할 나라를 누르거나 검색하세요")});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&cmpBase){cmpBase=null;$("toast").hidden=true}});
 function wxGet(c){
@@ -1035,8 +1124,340 @@ function spark(code){
   return box;
 }
 
+/* ---------- 미세먼지 ---------- */
+var AIR=null,airOn=false,airByA2={};
+var airMat=new THREE.ShaderMaterial({
+  uniforms:{pr:{value:renderer.getPixelRatio()}},transparent:true,depthWrite:false,
+  vertexShader:"attribute vec3 color;varying vec3 vC;uniform float pr;void main(){vC=color;gl_PointSize=pr*11.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:"varying vec3 vC;void main(){float d=length(gl_PointCoord-0.5)*2.0;float a=1.0-smoothstep(0.55,0.75,d);float ring=smoothstep(0.75,0.85,d)*(1.0-smoothstep(0.9,1.0,d));if(a+ring<0.02)discard;gl_FragColor=vec4(mix(vC,vec3(0.02),ring),max(a*0.92,ring*0.7));}"
+});
+var airPts=new THREE.Points(new THREE.BufferGeometry(),airMat);airPts.renderOrder=5;airPts.visible=false;scene.add(airPts);
+function airGrade(pm){return pm<=15?["좋음","#4aa8ff"]:pm<=35?["보통","#5ee08a"]:pm<=75?["나쁨","#ffb454"]:["매우 나쁨","#ff4d4d"]}
+getJSON("data/air.json?v="+Math.floor(Date.now()/600000)).then(function(j){
+  if(!j||!j.items)return;AIR=j;
+  var n=j.items.length,pos=new Float32Array(n*3),col=new Float32Array(n*3),cc=new THREE.Color();
+  j.items.forEach(function(it,i){it.v=ll2v(it.lat,it.lon,1.003);pos[i*3]=it.v.x;pos[i*3+1]=it.v.y;pos[i*3+2]=it.v.z;cc.set(airGrade(it.pm25)[1]);col[i*3]=cc.r;col[i*3+1]=cc.g;col[i*3+2]=cc.b;if(!it.city)airByA2[it.a2]=it});
+  var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("color",new THREE.BufferAttribute(col,3));
+  airPts.geometry.dispose();airPts.geometry=g;airPts.visible=airOn;
+  if(current&&current.c)renderAir(current.c);
+}).catch(function(){});
+$("air-btn").addEventListener("click",function(){airOn=!airOn;airPts.visible=airOn&&!!AIR;this.setAttribute("aria-pressed",airOn?"true":"false")});
+function renderAir(c){
+  var box=$("p-air");box.textContent="";var it=c&&airByA2[c.a2];if(!it)return;
+  var g=airGrade(it.pm25),r=el("div","rows");r.style.marginTop="8px";
+  var rw=row("미세먼지 PM2.5",nf(it.pm25,0)+" ㎍/㎥ · "+g[0]);rw.lastChild.style.color=g[1];r.appendChild(rw);
+  r.appendChild(row("PM10",nf(it.pm10,0)+" ㎍/㎥"));box.appendChild(r);
+}
+function openAir(it){
+  alt={type:"air"};var g=airGrade(it.pm25),cty=BYA2[it.a2];
+  var a=openAlt(it.name+" 대기질",cty?cty.ko:"",null,g[1]);
+  var s1=sec(a,"초미세먼지 PM2.5",AIR.at?"Open-Meteo · "+ago(AIR.at)+" 업데이트":"Open-Meteo",!!AIR.at&&Date.now()-new Date(AIR.at)<90*60000);
+  var b=el("div","big",nf(it.pm25,0)+" ㎍/㎥");s1.appendChild(b);var sb=el("div","sub",g[0]);sb.style.color=g[1];s1.appendChild(sb);
+  var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);
+  r.appendChild(row("미세먼지 PM10",nf(it.pm10,0)+" ㎍/㎥"));if(it.aqi!=null)r.appendChild(row("미국 AQI",nf(it.aqi,0)));
+  s1.appendChild(el("div","note","등급은 환경부 PM2.5 기준이에요: 좋음 0~15 · 보통 16~35 · 나쁨 36~75 · 매우 나쁨 76 이상. 모델 예측값이라 측정소 값과 다를 수 있어요."));
+  if(it.a2==="KR"){
+    var s2=sec(a,"국내 주요 도시"),r2=el("div","rows");s2.appendChild(r2);
+    AIR.items.filter(function(x){return x.a2==="KR"}).sort(function(p,q){return q.pm25-p.pm25}).forEach(function(x){var gg=airGrade(x.pm25),rw=row(x.name==="Seoul"?"서울":x.name,nf(x.pm25,0)+" · "+gg[0]);rw.lastChild.style.color=gg[1];r2.appendChild(rw)});
+  }
+  fly(it.lon,it.lat);
+}
+
+/* ---------- 화산 ---------- */
+var VOLC=[],volcAt=null,volcGroup=new THREE.Group();scene.add(volcGroup);
+var volcTex=(function(){
+  var cv=document.createElement("canvas");cv.width=cv.height=128;var g=cv.getContext("2d");
+  var gr=g.createRadialGradient(64,70,0,64,70,62);gr.addColorStop(0,"rgba(255,220,150,.9)");gr.addColorStop(.25,"rgba(255,106,61,.55)");gr.addColorStop(1,"rgba(255,80,40,0)");
+  g.fillStyle=gr;g.fillRect(0,0,128,128);
+  g.beginPath();g.moveTo(64,34);g.lineTo(96,92);g.lineTo(32,92);g.closePath();g.fillStyle="#ff6a3d";g.fill();g.lineWidth=5;g.strokeStyle="rgba(255,255,255,.95)";g.stroke();
+  return new THREE.CanvasTexture(cv);
+})();
+getJSON("data/volcanoes.json?v="+Math.floor(Date.now()/600000)).then(function(j){
+  VOLC=((j&&j.items)||[]).filter(function(v){return v.pos});volcAt=j&&j.at;
+  VOLC.forEach(function(v){var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:volcTex,transparent:true,depthWrite:false,depthTest:false}));sp.renderOrder=6;v.v=ll2v(v.pos[1],v.pos[0],1.006);sp.position.copy(v.v);v.sprite=sp;volcGroup.add(sp)});
+  $("volc-btn").lastChild.textContent="화산 "+VOLC.length;
+}).catch(function(){});
+$("volc-btn").addEventListener("click",function(){volcGroup.visible=!volcGroup.visible;this.setAttribute("aria-pressed",volcGroup.visible?"true":"false")});
+function openVolcano(v){
+  alt={type:"volc"};
+  var a=openAlt("화산 "+v.name,v.country||"",null,"#ff6a3d");
+  var lv={Red:"적색 경보",Orange:"주황 경보",Green:"녹색"}[v.alert]||v.alert||"-";
+  var s1=sec(a,"최근 분화 기록",volcAt?"GDACS · "+ago(volcAt)+" 확인":"GDACS",false);
+  s1.appendChild(el("div","big",ago((v.to||v.from)+"Z")));
+  s1.appendChild(el("div","sub",kst(new Date((v.to||v.from)+"Z").getTime(),true)+" (한국 시간) 기록"));
+  var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);
+  r.appendChild(row("경보 단계",lv));r.appendChild(row("위치",llText(v.pos[1],v.pos[0])));
+  r.appendChild(row("서울에서","약 "+nf(Math.round(kmFromSeoul(v.pos[1],v.pos[0])/10)*10,0)+" km"));
+  s1.appendChild(el("div","note","GDACS가 최근 120일 안에 기록한 분화예요. 지금도 분화 중인지는 각국 화산 관측 기관 발표를 확인하세요."));
+  var s2=sec(a,"더 보기"),l=el("div","links");l.appendChild(link("GDACS 상세 보고서",v.url));s2.appendChild(l);
+  fly(v.pos[0],v.pos[1]);
+}
+
+/* ---------- 항공편 (OpenSky) ---------- */
+var FL=[],flightOn=false,flightAt=0,flightCenter=null,flightBusy=false,flightTimer=null;
+var flMat=new THREE.ShaderMaterial({
+  uniforms:{pr:{value:renderer.getPixelRatio()}},transparent:true,depthWrite:false,
+  vertexShader:["attribute float hd;uniform float pr;varying float vAng;",
+  "void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vec4 p0=projectionMatrix*mv;",
+  " vec3 up=vec3(0.0,1.0,0.0);vec3 n=normalize(position);vec3 east=normalize(cross(up,n));vec3 north=normalize(cross(n,east));",
+  " vec3 d=north*cos(hd)+east*sin(hd);vec4 p1=projectionMatrix*modelViewMatrix*vec4(position+d*0.01,1.0);",
+  " vec2 sd=p1.xy/p1.w-p0.xy/p0.w;vAng=atan(sd.y,sd.x);gl_PointSize=pr*15.0;gl_Position=p0;}"].join("\n"),
+  fragmentShader:["varying float vAng;",
+  "void main(){vec2 c=gl_PointCoord-0.5;c.y=-c.y;float ca=cos(vAng),sa=sin(vAng);vec2 q=vec2(c.x*ca+c.y*sa,-c.x*sa+c.y*ca);",
+  " float body=step(abs(q.y),0.055)*step(-0.4,q.x)*step(q.x,0.42);",
+  " float wing=step(abs(q.y),0.4)*step(-0.08-abs(q.y)*0.45,q.x)*step(q.x,0.08-abs(q.y)*0.45);",
+  " float tail=step(abs(q.y),0.17)*step(-0.4,q.x)*step(q.x,-0.3-abs(q.y)*0.2);",
+  " float a=max(body,max(wing,tail));if(a<0.5)discard;gl_FragColor=vec4(0.9,0.95,1.0,0.95);}"].join("\n")
+});
+var flPts=new THREE.Points(new THREE.BufferGeometry(),flMat);flPts.renderOrder=7;flPts.visible=false;scene.add(flPts);
+function camCenter(){var v=camera.position.clone().normalize();return {lat:Math.asin(v.y)*R2D,lon:Math.atan2(-v.z,v.x)*R2D}}
+function loadFlights(){
+  if(!flightOn||flightBusy)return;flightBusy=true;
+  var c=camCenter(),la0=Math.max(-85,c.lat-14),la1=Math.min(85,c.lat+14),lo0=Math.max(-180,c.lon-22),lo1=Math.min(180,c.lon+22);
+  getJSON("https://opensky-network.org/api/states/all?lamin="+la0.toFixed(2)+"&lomin="+lo0.toFixed(2)+"&lamax="+la1.toFixed(2)+"&lomax="+lo1.toFixed(2)).then(function(j){
+    flightBusy=false;flightAt=Date.now();flightCenter=c;
+    FL=(j.states||[]).filter(function(s){return s[5]!=null&&s[6]!=null&&!s[8]}).slice(0,1500).map(function(s){return {icao:s[0],cs:(s[1]||"").trim(),origin:s[2],lon:s[5],lat:s[6],alt:s[13]!=null?s[13]:s[7],vel:s[9],trk:s[10]||0,vr:s[11]}});
+    var n=FL.length,pos=new Float32Array(n*3),hd=new Float32Array(n);
+    FL.forEach(function(f,i){f.v=ll2v(f.lat,f.lon,1.004+(f.alt||0)/6371000*8);pos[i*3]=f.v.x;pos[i*3+1]=f.v.y;pos[i*3+2]=f.v.z;hd[i]=f.trk*D2R});
+    var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("hd",new THREE.BufferAttribute(hd,1));
+    flPts.geometry.dispose();flPts.geometry=g;
+    $("flight-btn").lastChild.textContent="항공편 "+n;
+  }).catch(function(){flightBusy=false;flightAt=Date.now();$("flight-btn").lastChild.textContent="항공편 ×";if(flightOn)notify("항공편 데이터를 지금 받을 수 없어요. 무료 조회 한도에 걸렸거나 연결 문제일 수 있어요.")});
+}
+$("flight-btn").addEventListener("click",function(){
+  flightOn=!flightOn;flPts.visible=flightOn;this.setAttribute("aria-pressed",flightOn?"true":"false");
+  if(flightOn){loadFlights();flightTimer=setInterval(loadFlights,45000)}else{clearInterval(flightTimer);$("flight-btn").lastChild.textContent="항공편"}
+});
+function tickFlights(){ // 지구를 많이 돌리면 그 지역으로 다시 불러오기 (최소 15초 간격)
+  if(!flightOn||!flightCenter||Date.now()-flightAt<15000)return;
+  var c=camCenter();if(Math.abs(c.lat-flightCenter.lat)>10||Math.abs(((c.lon-flightCenter.lon+540)%360)-180)>15)loadFlights();
+}
+function compass(deg){return ["북","북동","동","남동","남","남서","서","북서"][Math.round(((deg%360)+360)%360/45)%8]}
+function openFlight(f){
+  alt={type:"flight"};
+  var a=openAlt(f.cs||f.icao.toUpperCase(),"등록 국가 "+f.origin,null,"#e8f1ff");
+  var s1=sec(a,"지금 비행 중","OpenSky · "+Math.max(1,Math.round((Date.now()-flightAt)/1000))+"초 전",true);
+  s1.appendChild(el("div","big",f.alt!=null?nf(f.alt,0)+" m":"-"));
+  s1.appendChild(el("div","sub",f.alt!=null?"고도 약 "+nf(Math.round(f.alt*3.28084/100)*100,0)+" ft":"고도 정보 없음"));
+  var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);
+  if(f.vel!=null)r.appendChild(row("속도",nf(f.vel*3.6,0)+" km/h"));
+  r.appendChild(row("방향",compass(f.trk)+" ("+Math.round(f.trk)+"°)"));
+  if(f.vr!=null)r.appendChild(row("상승/하강",Math.abs(f.vr)<0.5?"수평 비행":(f.vr>0?"상승 ":"하강 ")+nf(Math.abs(f.vr),1)+" m/s"));
+  var ln=landName(f.lat,f.lon);r.appendChild(row("현재 위치",(ln?ln+" 상공":"바다 위")+" · "+llText(f.lat,f.lon)));
+  var s2=sec(a,"더 보기"),l=el("div","links");if(f.cs)l.appendChild(link("FlightAware에서 "+f.cs,"https://www.flightaware.com/live/flight/"+encodeURIComponent(f.cs)));s2.appendChild(l);
+  s2.appendChild(el("div","note","OpenSky의 무료 데이터예요. 하루 조회 횟수에 제한이 있어서, 지금 보고 있는 지역 주변만 45초마다 불러와요. 고도는 눈에 띄게 과장해서 표시했어요."));
+}
+
+/* ---------- 달 ---------- */
+var MOON_D=2.35,MOON_R=0.2,moonOn=true,moonNow=null;
+var moonTex=(function(){
+  var cv=document.createElement("canvas");cv.width=1024;cv.height=512;var g=cv.getContext("2d");
+  g.fillStyle="#8d8d8f";g.fillRect(0,0,1024,512);
+  var rnd=(function(sd){return function(){sd=(sd*16807)%2147483647;return sd/2147483647}})(42);
+  var maria=[[480,170,120,70],[560,230,90,60],[430,250,80,55],[610,160,70,50],[520,320,60,40],[380,190,60,45],[650,280,50,35]];
+  maria.forEach(function(m){var gr=g.createRadialGradient(m[0],m[1],0,m[0],m[1],m[2]);gr.addColorStop(0,"rgba(55,55,60,.75)");gr.addColorStop(1,"rgba(55,55,60,0)");g.fillStyle=gr;g.beginPath();g.ellipse(m[0],m[1],m[2],m[3],rnd()*3,0,7);g.fill()});
+  for(var i=0;i<900;i++){var x=rnd()*1024,y=rnd()*512,r=Math.pow(rnd(),3)*16+1;g.beginPath();g.arc(x,y,r,0,7);g.fillStyle="rgba(60,60,64,"+(0.25+rnd()*0.3)+")";g.fill();g.beginPath();g.arc(x-r*0.25,y-r*0.25,r*0.85,0,7);g.strokeStyle="rgba(200,200,205,"+(0.12+rnd()*0.2)+")";g.lineWidth=Math.max(0.6,r*0.18);g.stroke()}
+  var im=g.getImageData(0,0,1024,512),d=im.data;for(var k=0;k<d.length;k+=4){var n=(rnd()-0.5)*18;d[k]+=n;d[k+1]+=n;d[k+2]+=n}g.putImageData(im,0,0);
+  return new THREE.CanvasTexture(cv);
+})();
+var moonGeo=new THREE.SphereGeometry(MOON_R,64,32);moonGeo.rotateY(-Math.PI/2);
+var moonMat=new THREE.ShaderMaterial({
+  uniforms:{map:{value:moonTex},sunDir:{value:sunDir}},
+  vertexShader:"varying vec2 vUv;varying vec3 vN;varying vec3 vW;void main(){vUv=uv;vN=normalize(mat3(modelMatrix)*normal);vW=(modelMatrix*vec4(position,1.0)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:"uniform sampler2D map;uniform vec3 sunDir;varying vec2 vUv;varying vec3 vN;varying vec3 vW;void main(){vec3 n=normalize(vN);vec3 t=texture2D(map,vUv).rgb;float d=max(dot(n,sunDir),0.0);float rim=pow(1.0-max(dot(n,normalize(cameraPosition-vW)),0.0),3.0);gl_FragColor=vec4(t*(0.09+1.2*pow(d,0.8))+vec3(0.55,0.62,0.75)*rim*0.35,1.0);}"
+});
+var moonMesh=new THREE.Mesh(moonGeo,moonMat);moonMesh.renderOrder=3;scene.add(moonMesh);
+function moonInfo(ms){
+  var d=ms/86400000-10957.5+1.5,rad=D2R,S=function(x){return Math.sin(x*rad)};
+  var N=125.1228-0.0529538083*d,inc=5.1454*rad,w=318.0634+0.1643573223*d,e=0.0549,M=115.3654+13.0649929509*d;
+  var E=M+e*R2D*S(M)*(1+e*Math.cos(M*rad));
+  for(var k=0;k<4;k++)E=E-(E-e*R2D*S(E)-M)/(1-e*Math.cos(E*rad));
+  var xv=Math.cos(E*rad)-e,yv=Math.sqrt(1-e*e)*S(E),v=Math.atan2(yv,xv)*R2D,r=Math.hypot(xv,yv);
+  var Nr=N*rad,vw=(v+w)*rad;
+  var xh=r*(Math.cos(Nr)*Math.cos(vw)-Math.sin(Nr)*Math.sin(vw)*Math.cos(inc)),yh=r*(Math.sin(Nr)*Math.cos(vw)+Math.cos(Nr)*Math.sin(vw)*Math.cos(inc)),zh=r*Math.sin(vw)*Math.sin(inc);
+  var lon=Math.atan2(yh,xh)*R2D,lat=Math.atan2(zh,Math.hypot(xh,yh))*R2D;
+  var Ms=356.047+0.9856002585*d,ws=282.9404+4.70935e-5*d,Ls=Ms+ws,Lm=N+w+M,Dm=Lm-Ls,F=Lm-N;
+  lon+=-1.274*S(M-2*Dm)+0.658*S(2*Dm)-0.186*S(Ms)-0.059*S(2*M-2*Dm)-0.057*S(M-2*Dm+Ms)+0.053*S(M+2*Dm)+0.046*S(2*Dm-Ms)+0.041*S(M-Ms)-0.035*S(Dm)-0.031*S(M+Ms)-0.015*S(2*F-2*Dm)+0.011*S(M-4*Dm);
+  lat+=-0.173*S(F-2*Dm)-0.055*S(M-F-2*Dm)-0.046*S(M+F-2*Dm)+0.033*S(F+2*Dm)+0.017*S(2*M+F);
+  var ecl=(23.4393-3.563e-7*d)*rad,lr=lon*rad,br=lat*rad,x=Math.cos(br)*Math.cos(lr),y=Math.cos(br)*Math.sin(lr),z=Math.sin(br);
+  var ye=y*Math.cos(ecl)-z*Math.sin(ecl),ze=y*Math.sin(ecl)+z*Math.cos(ecl);
+  var ra=Math.atan2(ye,x)*R2D,dec=Math.atan2(ze,Math.hypot(x,ye))*R2D;
+  var gmst=(18.697374558+24.06570982441908*(ms/86400000-10957.5))*15;
+  var sunTrue=Ls+1.915*S(Ms)+0.02*S(2*Ms),el_=((lon-sunTrue)%360+360)%360;
+  return {lat:dec,lon:((ra-gmst)%360+540)%360-180,elong:el_,age:el_/360*29.530589,illum:(1-Math.cos(el_*rad))/2,waxing:el_<180};
+}
+function moonPhaseName(age){return age<1.0||age>28.5?"삭 (그믐 직후)":age<6.4?"초승달":age<8.4?"상현달":age<13.8?"차오르는 달":age<15.8?"보름달":age<21.1?"기우는 달":age<23.1?"하현달":"그믐달"}
+function nextPhase(ms,target){ // target 180=보름, 0=삭
+  var prev=moonInfo(ms).elong;
+  for(var t=ms+3600e3;t<ms+32*864e5;t+=3600e3){var cur=moonInfo(t).elong;
+    var hit=target===180?(prev<180&&cur>=180):(prev>300&&cur<60);
+    if(hit){var a=target===180?180-prev:360-prev,b=target===180?cur-180:cur;return t-3600e3+3600e3*a/(a+b)}prev=cur}
+  return null;
+}
+var ECLIPSES=[["2027-02-06","금환일식"],["2027-02-20","반영월식"],["2027-07-18","반영월식"],["2027-08-02","개기일식"],["2027-08-17","반영월식"],["2028-01-12","부분월식"],["2028-01-26","금환일식"],["2028-07-06","부분월식"],["2028-07-22","개기일식"],["2028-12-31","개기월식"]];
+$("moon-btn").addEventListener("click",function(){moonOn=!moonOn;this.setAttribute("aria-pressed",moonOn?"true":"false")});
+function openMoon(){
+  alt={type:"moon"};var mi=moonInfo(Date.now());
+  var a=openAlt("달",moonPhaseName(mi.age)+(mi.waxing?" · 차오르는 중":" · 기우는 중"),null,"#d9d9dc");
+  var s1=sec(a,"지금 달","실시간 계산",true);
+  s1.appendChild(el("div","big",Math.round(mi.illum*100)+"%"));s1.appendChild(el("div","sub","밝게 빛나는 면적 · 월령 "+mi.age.toFixed(1)+"일"));
+  var r=el("div","rows");r.style.marginTop="6px";s1.appendChild(r);
+  var nf_=nextPhase(Date.now(),180),nn=nextPhase(Date.now(),0);
+  if(nf_)r.appendChild(row("다음 보름달",kst(nf_,true)));if(nn)r.appendChild(row("다음 삭(그믐)",kst(nn,true)));
+  var ln=landName(mi.lat,mi.lon);r.appendChild(row("달 바로 아래",(ln||"바다")+" · "+llText(mi.lat,mi.lon)));
+  var altS=Math.asin(Math.max(-1,Math.min(1,ll2v(SEOUL.lat,SEOUL.lng,1).dot(ll2v(mi.lat,mi.lon,1)))))*R2D;
+  r.appendChild(row("서울 하늘",altS>0?"떠 있음 · 지평선 위 "+Math.round(altS)+"°":"지평선 아래"));
+  var s2=sec(a,"다가오는 일식·월식"),r2=el("div","rows");s2.appendChild(r2);
+  var today=new Date().toISOString().slice(0,10);
+  ECLIPSES.filter(function(x){return x[0]>=today}).slice(0,4).forEach(function(x){var p=x[0].split("-");r2.appendChild(row(p[0]+"년 "+(+p[1])+"월 "+(+p[2])+"일",x[1]))});
+  s2.appendChild(el("div","note","날짜는 세계시(UTC) 기준이에요. 보이는 지역은 일식·월식마다 달라요. 화면 속 달은 실제 방향에 있지만 거리와 크기는 보기 좋게 줄였어요."));
+  var s3=sec(a,"더 보기"),l=el("div","links");l.appendChild(link("NASA 일식·월식 안내","https://science.nasa.gov/eclipses/future-eclipses/"));s3.appendChild(l);
+}
+
+/* ---------- 매거진 ---------- */
+var MAG=null;
+getJSON("data/magazines.json?v="+Math.floor(Date.now()/3600000)).then(function(j){MAG=j;if(current&&current.c)renderMag(current.c)}).catch(function(){MAG={items:{}};if(current&&current.c)renderMag(current.c)});
+function renderMag(c){
+  var box=$("p-mag"),chip=$("mag-chip");box.textContent="";
+  if(!c){chip.textContent="";return}
+  if(!MAG){chip.className="chip";chip.textContent="불러오는 중";return}
+  var list=MAG.items&&MAG.items[c.a2];
+  if(!list||!list.length){
+    chip.className="chip";chip.textContent="검색으로 보기";
+    box.appendChild(el("div","note","이 나라의 대표 매거진 목록은 아직 준비되지 않았어요. 아래에서 바로 찾아볼 수 있어요."));
+    var l=el("div","links");l.style.marginTop="8px";
+    l.appendChild(link(c.ko+" 패션 매거진","https://www.google.com/search?q="+encodeURIComponent(c.ko+" 패션 매거진")));
+    l.appendChild(link(c.ko+" 여행 기사","https://www.google.com/search?q="+encodeURIComponent(c.en+" travel guide magazine")));
+    box.appendChild(l);return;
+  }
+  var nh=list.filter(function(m){return m.h&&m.h.length}).length;
+  chip.className="chip"+(nh?" live":"");chip.textContent=nh?"최신 기사 "+ago(MAG.at)+" 확인":"공식 사이트";
+  [["f","패션"],["t","여행 · 라이프"]].forEach(function(gp){
+    var arr=list.filter(function(m){return m.k===gp[0]});if(!arr.length)return;
+    box.appendChild(el("div","mag-g",gp[1]));
+    arr.forEach(function(m){
+      var d=el("div","mag"),a=el("a","name",m.n);a.href=m.u;a.target="_blank";a.rel="noopener";d.appendChild(a);
+      if(m.h&&m.h.length){var ul=el("ul");m.h.forEach(function(h){var li=el("li"),x=el("a",null,h.t);x.href=h.u;x.target="_blank";x.rel="noopener";li.appendChild(x);li.appendChild(el("small",null,ago(h.d)));ul.appendChild(li)});d.appendChild(ul)}
+      else d.appendChild(el("small",null,"공식 사이트에서 최신호 보기"));
+      box.appendChild(d);
+    });
+  });
+  box.appendChild(el("div","note","표지와 본문은 각 매거진 공식 사이트에서 볼 수 있어요."));
+}
+
+/* ---------- 알림 ---------- */
+var notifyTimer=null;
+function notify(msg){$("toast-t").textContent=msg;$("toast-x").textContent="닫기";$("toast").hidden=false;clearTimeout(notifyTimer);notifyTimer=setTimeout(function(){if(!cmpBase)$("toast").hidden=true},6000)}
+
+/* ---------- 소리 (WebAudio로 직접 만드는 앰비언트 음악·효과음) ---------- */
+var AU=null;
+function mtof(m){return 440*Math.pow(2,(m-69)/12)}
+function audioStart(){
+  try{
+    if(!AU){
+      var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+      var ctx=new C(),master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+      var dest=ctx.createMediaStreamDestination?ctx.createMediaStreamDestination():null;if(dest)master.connect(dest);
+      var conv=ctx.createConvolver(),len=Math.floor(ctx.sampleRate*3.4),ir=ctx.createBuffer(2,len,ctx.sampleRate);
+      for(var ch=0;ch<2;ch++){var dd=ir.getChannelData(ch);for(var i=0;i<len;i++)dd[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.4)}
+      conv.buffer=ir;var wet=ctx.createGain();wet.gain.value=0.6;conv.connect(wet);wet.connect(master);
+      var bus=ctx.createGain();bus.gain.value=0.85;bus.connect(master);bus.connect(conv);
+      AU={ctx:ctx,master:master,dest:dest,bus:bus,timer:null,on:false};
+    }
+    var c=AU.ctx;if(c.state==="suspended")c.resume();
+    AU.master.gain.cancelScheduledValues(c.currentTime);AU.master.gain.setTargetAtTime(0.9,c.currentTime,0.8);
+    AU.on=true;musicLoop();return AU;
+  }catch(_){AU=null;return null}
+}
+var CHORDS=[[48,55,62,64,71],[45,52,59,60,67],[41,48,55,57,64],[43,50,57,59,62]],PENTA=[72,74,76,79,81,84,86,88];
+function pad(ch,t0,dur){
+  var c=AU.ctx,g=c.createGain();g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(0.055,t0+dur*0.35);g.gain.linearRampToValueAtTime(0,t0+dur+1.6);
+  var f=c.createBiquadFilter();f.type="lowpass";f.Q.value=0.5;f.frequency.setValueAtTime(600,t0);f.frequency.linearRampToValueAtTime(1500,t0+dur*0.5);f.frequency.linearRampToValueAtTime(700,t0+dur+1.6);
+  f.connect(g);g.connect(AU.bus);
+  ch.forEach(function(m,k){[-7,7].forEach(function(det){var o=c.createOscillator();o.type=k===0?"sine":"triangle";o.frequency.value=mtof(m-(k===0?12:0));o.detune.value=det;var og=c.createGain();og.gain.value=k===0?0.9:0.32;o.connect(og);og.connect(f);o.start(t0);o.stop(t0+dur+1.8)})});
+}
+function bell(t0,m,v){var c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=mtof(m);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v,t0+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+2.8);o.connect(g);g.connect(AU.bus);o.start(t0);o.stop(t0+2.9)}
+function musicLoop(){
+  if(AU.timer)return;var c=AU.ctx,next=c.currentTime+0.15,ci=0;
+  (function tick(){
+    if(!AU||!AU.on){if(AU)AU.timer=null;return}
+    while(next<c.currentTime+1.5){pad(CHORDS[ci%4],next,8);for(var b=0;b<3;b++)if(Math.random()<0.65)bell(next+1+b*2.3+Math.random(),PENTA[(Math.random()*PENTA.length)|0],0.022);ci++;next+=8}
+    AU.timer=setTimeout(tick,500);
+  })();
+}
+function sfxWhoosh(){
+  if(!AU||!AU.on)return;var c=AU.ctx,t=c.currentTime,n=Math.floor(c.sampleRate*1.7),b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);
+  for(var i=0;i<n;i++)d[i]=Math.random()*2-1;
+  var s=c.createBufferSource();s.buffer=b;var f=c.createBiquadFilter();f.type="bandpass";f.Q.value=1.1;
+  f.frequency.setValueAtTime(220,t);f.frequency.exponentialRampToValueAtTime(2000,t+0.85);f.frequency.exponentialRampToValueAtTime(420,t+1.6);
+  var g=c.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.08,t+0.65);g.gain.linearRampToValueAtTime(0,t+1.65);
+  s.connect(f);f.connect(g);g.connect(AU.bus);s.start(t);s.stop(t+1.7);
+}
+function sfxChime(){if(!AU||!AU.on)return;var t=AU.ctx.currentTime;bell(t,88,0.035);bell(t+0.13,95,0.026)}
+function audioStop(){if(!AU)return;var c=AU.ctx;AU.on=false;AU.master.gain.setTargetAtTime(0,c.currentTime,0.45);setTimeout(function(){if(AU&&!AU.on)try{c.suspend()}catch(_){}},2600)}
+
+/* ---------- 투어 영상 녹화 ---------- */
+var rec=null;
+function recSupported(){return !!(window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream)}
+function pickMime(){var c=["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];for(var i=0;i<c.length;i++){try{if(MediaRecorder.isTypeSupported(c[i]))return c[i]}catch(_){}}return ""}
+function computeFit(w,h){var tanV=Math.tan(camera.fov*D2R/2);return 1/Math.sin(Math.min(Math.atan(tanV),Math.atan(tanV*w/h))*0.84)}
+function layoutRec(){var sw=stage.clientWidth,sh=stage.clientHeight,k=Math.min(sw/rec.W,sh/rec.H),c=rec.comp;c.style.cssText="position:absolute;width:"+(rec.W*k)+"px;height:"+(rec.H*k)+"px;left:"+((sw-rec.W*k)/2)+"px;top:"+((sh-rec.H*k)/2)+"px"}
+function recStart(aspect){
+  var W=aspect==="v"?720:1280,H=aspect==="v"?1280:720,comp=document.createElement("canvas");comp.width=W;comp.height=H;
+  rec={W:W,H:H,comp:comp,cx:comp.getContext("2d"),aspect:aspect,chunks:[],t0:Date.now(),capA:0};
+  renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;camera.clearViewOffset();camera.updateProjectionMatrix();fitDist=computeFit(W,H);
+  stage.appendChild(comp);renderer.domElement.style.visibility="hidden";layoutRec();
+  var stream=comp.captureStream(30);
+  if(AU&&AU.on&&AU.dest)AU.dest.stream.getAudioTracks().forEach(function(tr){stream.addTrack(tr)});
+  var mime=pickMime(),opts={videoBitsPerSecond:8000000};if(mime)opts.mimeType=mime;
+  try{rec.mr=new MediaRecorder(stream,opts)}catch(e){rec.mr=new MediaRecorder(stream)}
+  rec.mime=rec.mr.mimeType||mime||"video/webm";
+  rec.mr.ondataavailable=function(e){if(e.data&&e.data.size)this._r.chunks.push(e.data)};rec.mr._r=rec;
+  rec.mr.start(1000);document.body.classList.add("recording");$("recdot").hidden=false;
+}
+function fitText(cx,txt,max,size,weight,family){cx.font=weight+" "+size+"px "+family;while(cx.measureText(txt).width>max&&size>14){size-=2;cx.font=weight+" "+size+"px "+family}return size}
+function recFrame(dt){
+  var r=rec,cx=r.cx,W=r.W,H=r.H;cx.drawImage(renderer.domElement,0,0,W,H);
+  var goal=$("caption").classList.contains("show")?1:0;r.capA+=(goal-r.capA)*Math.min(1,dt*2.4);
+  var SANS="'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif",MONO="'IBM Plex Mono',ui-monospace,monospace",pad=40;
+  cx.save();cx.textBaseline="alphabetic";cx.shadowColor="rgba(0,0,0,.9)";cx.shadowBlur=18;
+  cx.globalAlpha=0.92;cx.fillStyle="#e9eef5";cx.font="600 26px "+SANS;cx.fillText("라이브 어스",pad,pad+26);
+  cx.fillStyle="#5ee08a";cx.font="500 17px "+MONO;cx.fillText("● LIVE  UTC "+new Date().toISOString().slice(11,16),pad,pad+56);
+  if(r.capA>0.01){
+    var off=(1-r.capA)*14,base=r.aspect==="v"?H-190:H-110,t=$("cap-t").textContent,s=$("cap-s").textContent;
+    cx.globalAlpha=r.capA;cx.fillStyle="#ffffff";var ts=fitText(cx,t,W-pad*2,r.aspect==="v"?62:60,"600",SANS);cx.fillText(t,pad,base+off);
+    cx.fillStyle="#dbe3ee";fitText(cx,s,W-pad*2,r.aspect==="v"?26:25,"400",SANS);cx.fillText(s,pad,base+off+ts*0.25+30);
+  }
+  cx.restore();
+}
+function recStop(){
+  var r=rec;rec=null;document.body.classList.remove("recording");$("recdot").hidden=true;
+  r.mr.onstop=function(){recDone(r)};try{r.mr.stop()}catch(_){}
+  r.comp.remove();renderer.domElement.style.visibility="";renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));resize();
+}
+var lastVideoUrl=null;
+function recDone(r){
+  var blob=new Blob(r.chunks,{type:r.mime.split(";")[0]});if(!blob.size){notify("영상이 만들어지지 않았어요. 이 브라우저에서는 녹화가 안 될 수 있어요.");return}
+  var ext=/mp4/.test(r.mime)?"mp4":"webm",d=new Date(),p=function(n){return (n<10?"0":"")+n};
+  var name="live-earth-"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+"."+ext;
+  if(lastVideoUrl)URL.revokeObjectURL(lastVideoUrl);var url=lastVideoUrl=URL.createObjectURL(blob);
+  var v=$("rd-v");v.src=url;try{v.play().catch(function(){})}catch(_){}
+  var dl=$("rd-dl");dl.href=url;dl.download=name;
+  $("rd-info").textContent=(r.aspect==="v"?"세로 9:16":"가로 16:9")+" · "+ext.toUpperCase()+" · "+(blob.size/1048576).toFixed(1)+"MB · "+Math.round((Date.now()-r.t0)/1000)+"초"+(ext==="webm"?" · 이 브라우저는 WebM으로 저장돼요. 인스타그램 등에 올릴 땐 MP4 변환이 필요할 수 있어요.":"");
+  var file=null;try{file=new File([blob],name,{type:blob.type})}catch(_){}
+  var sh=$("rd-share");sh.hidden=!(file&&navigator.canShare&&navigator.canShare({files:[file]}));
+  sh.onclick=function(){navigator.share({files:[file],title:"라이브 어스"}).catch(function(){})};
+  $("recdone").hidden=false;
+}
+$("rd-x").addEventListener("click",function(){$("recdone").hidden=true;$("rd-v").pause()});
+
 /* ---------- 시네마틱 투어 ---------- */
-var tour=null;
+var tour=null,lookGoal=new THREE.Vector3(),lookCur=new THREE.Vector3();
+var TCFG={sun:1,seoul:1,quake:1,storm:1,volc:1,aurora:1,iss:1,moon:1,set:1,music:1,countries:[]};
+try{var saved=JSON.parse(localStorage.getItem("le-tour")||"null");if(saved)for(var key in saved)TCFG[key]=saved[key]}catch(_){}
+function saveCfg(){try{localStorage.setItem("le-tour",JSON.stringify(TCFG))}catch(_){}}
+var SCENES=[["sun","해 뜨는 곳"],["seoul","서울"],["quake","가장 큰 지진"],["storm","태풍"],["volc","화산"],["aurora","오로라"],["iss","우주정거장"],["moon","달"],["set","해 지는 곳"]];
+function Z(rel){return 1+rel*(fitDist-1)}
 function landAlong(lon){
   var lats=[35,25,45,15,52,5,-5,-15,-25,-35,58];
   for(var d=0;d<=15;d+=3)for(var sg=-1;sg<=1;sg+=2){var L=((lon+sg*d+540)%360)-180;for(var i=0;i<lats.length;i++){var f=findCountry(lats[i],L);if(f)return {lat:lats[i],lon:L,f:f}}if(d===0)break}
@@ -1044,51 +1465,100 @@ function landAlong(lon){
 }
 function placeLine(p){var c=p.f&&COUNTRIES[p.f.id];return c?c.ko+(c.tz?" · 현지 "+hm24(c.tz):""):""}
 function buildStops(){
-  var st=[],s0=sunLL(Date.now()),wide=Math.max(fitDist*1.12,3.1);
-  st.push({lon:cam.lon,lat:18,dist:wide,hold:4.5,title:"라이브 어스",sub:"지금 이 순간, 살아 있는 지구"});
-  var rise=landAlong(((s0.lon-88+540)%360)-180);
-  st.push({lon:rise.lon,lat:rise.lat,dist:2.0,hold:5,title:"지금 해가 뜨는 곳",sub:placeLine(rise)||"새벽이 밝아오는 바다 위"});
-  st.push({lon:126.98,lat:37.57,dist:1.7,hold:5,title:"서울",sub:"현지 "+hm24("Asia/Seoul")+" · 지금 "+dayNight(37.57,126.98)+(rates&&rates.KRW?" · 1달러 "+nf(rates.KRW,0)+"원":"")});
+  var st=[],s0=sunLL(Date.now());
+  st.push({lon:cam.lon,lat:18,dist:Z(1.12),hold:4.5,title:"라이브 어스",sub:"지금 이 순간, 살아 있는 지구"});
+  if(TCFG.sun){var rise=landAlong(((s0.lon-88+540)%360)-180);st.push({lon:rise.lon,lat:rise.lat,dist:Z(0.62),hold:5,title:"지금 해가 뜨는 곳",sub:placeLine(rise)||"새벽이 밝아오는 바다 위"})}
+  if(TCFG.seoul){var ka=airByA2.KR;st.push({lon:126.98,lat:37.57,dist:Z(0.5),hold:5,title:"서울",sub:"현지 "+hm24("Asia/Seoul")+" · 지금 "+dayNight(37.57,126.98)+(ka?" · 초미세먼지 "+airGrade(ka.pm25)[0]:"")+(rates&&rates.KRW?" · 1달러 "+nf(rates.KRW,0)+"원":"")})}
+  (TCFG.countries||[]).forEach(function(a2){var c=BYA2[a2];if(!c||c.lat==null)return;var w=wxCache[a2];
+    st.push({lon:c.lng,lat:c.lat,dist:Z(0.55),hold:5,title:c.ko,sub:(c.tz?"현지 "+hm24(c.tz)+" · ":"")+"지금 "+dayNight(c.lat,c.lng)+(w?" · "+nf(w.w.temperature_2m,0)+"°C "+(WMO[w.w.weather_code]||""):"")})});
   var q24=QUAKES.filter(function(q){return Date.now()-q.time<24*3600e3}).sort(function(a,b){return b.mag-a.mag})[0];
-  if(q24&&quakePts.visible)st.push({lon:q24.lon,lat:q24.lat,dist:1.85,hold:5,title:"규모 "+q24.mag.toFixed(1)+" 지진",sub:(landName(q24.lat,q24.lon)||"바다")+" · "+ago(new Date(q24.time).toISOString())});
-  if(stormGroup.visible)STORMS.slice().sort(function(a,b){return b.wind-a.wind}).slice(0,2).forEach(function(sm){st.push({lon:sm.pos[0],lat:sm.pos[1],dist:1.85,hold:5,title:stormKind(sm)+" "+sm.name,sub:"최대 풍속 "+sm.wind+" km/h · 강도 "+stormGrade(sm.wind)})});
-  if(AUR&&aurora.visible){var b=aurBest();if(b)st.push({lon:b.lon,lat:b.lat>0?Math.min(64,b.lat-6):Math.max(-64,b.lat+6),dist:2.15,hold:6,title:"오로라",sub:(b.lat>0?"북":"남")+"극권 밤하늘"+(AUR.kp!=null?" · Kp "+(+AUR.kp).toFixed(1):"")})}
-  if(issPos&&issGroup.visible)st.push({follow:"iss",dist:1.65,hold:9,title:"국제우주정거장",sub:"",dyn:function(){var ln=issPos&&landName(issPos.lat,issPos.lon);return (ln?ln+" 상공":"바다 위")+" · 시속 "+nf(issPos.vel,0)+" km"}});
-  var set=landAlong(((s0.lon+88+540)%360)-180);
-  st.push({lon:set.lon,lat:set.lat,dist:2.0,hold:5,title:"지금 해가 지는 곳",sub:placeLine(set)||"노을이 지는 바다 위"});
-  st.push({lon:set.lon+50,lat:12,dist:wide,hold:5.5,title:"라이브 어스",sub:"jw82-ops.github.io/live-earth"});
+  if(TCFG.quake&&q24)st.push({lon:q24.lon,lat:q24.lat,dist:Z(0.58),hold:5,title:"규모 "+q24.mag.toFixed(1)+" 지진",sub:(landName(q24.lat,q24.lon)||"바다")+" · "+ago(new Date(q24.time).toISOString())});
+  if(TCFG.storm)STORMS.slice().sort(function(a,b){return b.wind-a.wind}).slice(0,2).forEach(function(sm){st.push({lon:sm.pos[0],lat:sm.pos[1],dist:Z(0.58),hold:5,title:stormKind(sm)+" "+sm.name,sub:"최대 풍속 "+sm.wind+" km/h · 강도 "+stormGrade(sm.wind)})});
+  if(TCFG.volc&&VOLC.length){var vv=VOLC.slice().sort(function(a,b){return (b.to||"").localeCompare(a.to||"")})[0];st.push({lon:vv.pos[0],lat:vv.pos[1],dist:Z(0.58),hold:5,title:"화산 "+vv.name,sub:(vv.country?vv.country+" · ":"")+"최근 분화 "+ago((vv.to||vv.from)+"Z")})}
+  if(TCFG.aurora&&AUR){var b=aurBest();if(b)st.push({lon:b.lon,lat:b.lat>0?Math.min(64,b.lat-6):Math.max(-64,b.lat+6),dist:Z(0.7),hold:6,title:"오로라",sub:(b.lat>0?"북":"남")+"극권 밤하늘"+(AUR.kp!=null?" · Kp "+(+AUR.kp).toFixed(1):"")})}
+  if(TCFG.iss&&issPos)st.push({follow:"iss",dist:Z(0.45),hold:9,title:"국제우주정거장",sub:"",dyn:function(){var ln=issPos&&landName(issPos.lat,issPos.lon);return (ln?ln+" 상공":"바다 위")+" · 시속 "+nf(issPos.vel,0)+" km"}});
+  if(TCFG.moon){var mi=moonInfo(Date.now());st.push({moon:true,hold:6,title:"달",sub:moonPhaseName(mi.age)+" · 밝기 "+Math.round(mi.illum*100)+"%"})}
+  if(TCFG.set){var set=landAlong(((s0.lon+88+540)%360)-180);st.push({lon:set.lon,lat:set.lat,dist:Z(0.62),hold:5,title:"지금 해가 지는 곳",sub:placeLine(set)||"노을이 지는 바다 위"})}
+  var last=st[st.length-1];st.push({lon:(last.lon!=null?last.lon:cam.lon)+50,lat:12,dist:Z(1.12),hold:5.5,title:"라이브 어스",sub:"jw82-ops.github.io/live-earth"});
   return st;
 }
-function showCaption(S){$("cap-t").textContent=S.title;$("cap-s").textContent=S.dyn?S.dyn():S.sub;$("caption").classList.add("show")}
+function moonGoal(){
+  var m=moonMesh.position.clone().normalize(),up=new THREE.Vector3(0,1,0),u=new THREE.Vector3().crossVectors(m,up);
+  if(u.lengthSq()<1e-4)u.set(1,0,0);u.normalize().addScaledVector(up,0.3).normalize();
+  var half=Math.min(camera.fov*D2R/2,Math.atan(Math.tan(camera.fov*D2R/2)*camera.aspect));
+  return {lon:Math.atan2(-u.z,u.x)*R2D,lat:Math.asin(u.y)*R2D,dist:(MOON_D/2+0.9)/Math.tan(half),look:m.multiplyScalar(MOON_D*0.5)};
+}
+function showCaption(S){$("cap-t").textContent=S.title;$("cap-s").textContent=S.dyn?S.dyn():S.sub;$("caption").classList.add("show");sfxChime()}
 function hideCaption(){$("caption").classList.remove("show")}
-function startTour(){
+function startTour(mode){
+  $("tsheet").hidden=true;
   if(panel.classList.contains("open"))$("close").click();
   cmpBase=null;$("toast").hidden=true;setShift(0);target=null;q.blur();qList.classList.remove("on");
-  document.body.classList.add("touring");$("cap-l").textContent="LIVE · UTC "+new Date().toISOString().slice(11,16);
-  tour={stops:buildStops(),i:0,phase:"fly",t:0,dur:0,cap:0,from:{lon:cam.lon,lat:cam.lat,dist:cam.dist}};
+  if(TCFG.music)audioStart();
+  (TCFG.countries||[]).forEach(function(a2){var c=BYA2[a2];if(c&&c.lat!=null)wxGet(c).catch(function(){})});
+  document.body.classList.add("touring");
+  if(mode!=="play"&&recSupported())recStart(mode);
+  $("cap-l").textContent="LIVE · UTC "+new Date().toISOString().slice(11,16);
+  tour={stops:buildStops(),i:0,phase:"fly",t:0,dur:0,cap:0,from:{lon:cam.lon,lat:cam.lat,dist:cam.dist},rec:!!rec};
+  sfxWhoosh();
 }
-function stopTour(){tour=null;hideCaption();document.body.classList.remove("touring");lastTouch=performance.now();cam.vLon=cam.vLat=0}
-$("tour-btn").addEventListener("click",function(e){e.stopPropagation();startTour()});
-window.addEventListener("pointerdown",function(e){if(tour&&!e.target.closest("#tour-btn")){stopTour();e.stopPropagation();e.preventDefault()}},true);
-window.addEventListener("keydown",function(e){if(tour&&(e.key==="Escape"||e.key===" ")){stopTour()}});
+function stopTour(){
+  if(!tour)return;tour=null;hideCaption();document.body.classList.remove("touring");lookGoal.set(0,0,0);
+  lastTouch=performance.now();cam.vLon=cam.vLat=0;audioStop();if(rec)recStop();clampCam();
+}
+window.addEventListener("pointerdown",function(e){if(tour){stopTour();e.stopPropagation();e.preventDefault()}},true);
+window.addEventListener("keydown",function(e){if(tour&&(e.key==="Escape"||e.key===" "))stopTour()});
 function tourUpdate(dt){
   var S=tour.stops[tour.i];tour.t+=dt;
-  var goal=S.follow==="iss"&&issPos?{lon:issPos.lon,lat:Math.max(-65,Math.min(65,issPos.lat))}:{lon:S.lon,lat:S.lat};
+  if(tour.rec&&rec&&Date.now()-rec.t0>180000){stopTour();return}
+  var goal;
+  if(S.moon){goal=moonGoal();lookGoal.copy(goal.look)}
+  else{lookGoal.set(0,0,0);goal=S.follow==="iss"&&issPos?{lon:issPos.lon,lat:Math.max(-65,Math.min(65,issPos.lat)),dist:S.dist}:{lon:S.lon,lat:S.lat,dist:S.dist}}
   if(tour.phase==="fly"){
     var dl=((goal.lon-tour.from.lon)%360+540)%360-180,dla=goal.lat-tour.from.lat,ang=Math.hypot(dl*Math.cos(goal.lat*D2R),dla);
-    if(!tour.dur)tour.dur=reduceMotion?0.01:Math.min(5.2,2.4+ang/55);
-    var u=Math.min(1,tour.t/tour.dur),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,hop=Math.min(1.25,ang/110);
-    cam.lon=tour.from.lon+dl*e;cam.lat=tour.from.lat+dla*e;cam.dist=tour.from.dist+(S.dist-tour.from.dist)*e+hop*Math.sin(Math.PI*e);
+    if(!tour.dur)tour.dur=reduceMotion?0.01:Math.min(5.2,2.6+ang/55+(S.moon?1:0));
+    var u=Math.min(1,tour.t/tour.dur),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,hop=S.moon?0:Math.min(1.25,ang/110)*(fitDist-1)/2;
+    cam.lon=tour.from.lon+dl*e;cam.lat=tour.from.lat+dla*e;cam.dist=tour.from.dist+(goal.dist-tour.from.dist)*e+hop*Math.sin(Math.PI*e);
     if(u>=0.8&&!tour.cap){tour.cap=1;showCaption(S)}
     if(u>=1){tour.phase="hold";tour.t=0}
   }else{
-    if(S.follow==="iss"){cam.lon=goal.lon;cam.lat=goal.lat}else cam.lon+=dt*1.1;
-    cam.dist+=(S.dist*0.93-cam.dist)*dt*0.09;
+    if(S.follow==="iss"||S.moon){cam.lon=goal.lon;cam.lat=goal.lat}else cam.lon+=dt*1.1;
+    cam.dist+=(goal.dist*(S.moon?1:0.93)-cam.dist)*dt*0.09;
     if(S.dyn)$("cap-s").textContent=S.dyn();
     if(tour.t>S.hold-1.0&&tour.cap===1){tour.cap=2;hideCaption()}
-    if(tour.t>=S.hold){tour.i=(tour.i+1)%tour.stops.length;if(tour.i===0)tour.stops=buildStops();tour.from={lon:cam.lon,lat:cam.lat,dist:cam.dist};tour.phase="fly";tour.t=0;tour.dur=0;tour.cap=0}
+    if(tour.t>=S.hold){
+      tour.i=(tour.i+1)%tour.stops.length;
+      if(tour.i===0){if(tour.rec){stopTour();return}tour.stops=buildStops()}
+      tour.from={lon:cam.lon,lat:cam.lat,dist:cam.dist};tour.phase="fly";tour.t=0;tour.dur=0;tour.cap=0;sfxWhoosh();
+    }
   }
 }
+
+/* 투어 설정 창 */
+(function(){
+  var box=$("ts-scenes");
+  SCENES.forEach(function(sc){var l=el("label","ts-chk"),i=document.createElement("input");i.type="checkbox";i.checked=!!TCFG[sc[0]];i.id="ts-"+sc[0];
+    i.addEventListener("change",function(){TCFG[sc[0]]=i.checked?1:0;saveCfg()});l.appendChild(i);l.appendChild(document.createTextNode(sc[1]));box.appendChild(l)});
+  var mu=$("ts-music");mu.checked=!!TCFG.music;mu.addEventListener("change",function(){TCFG.music=mu.checked?1:0;saveCfg()});
+  function chips(){var c=$("ts-chips");c.textContent="";(TCFG.countries||[]).forEach(function(a2,i){var k=BYA2[a2];if(!k)return;var b=el("button","chipx",(k.flag||"")+" "+k.ko+"  ×");b.type="button";b.setAttribute("aria-label",k.ko+" 빼기");b.addEventListener("click",function(){TCFG.countries.splice(i,1);saveCfg();chips()});c.appendChild(b)})}
+  chips();
+  var tq=$("ts-q"),tl=$("ts-list");
+  tq.addEventListener("input",function(){
+    var v=tq.value.trim().toLowerCase();tl.textContent="";if(!v){tl.classList.remove("on");return}
+    index.filter(function(x){return x.key.indexOf(v)>=0&&COUNTRIES[x.f.id]}).slice(0,5).forEach(function(x){var b=el("button");b.type="button";b.appendChild(document.createTextNode((x.flag?x.flag+" ":"")+x.ko));b.appendChild(el("small",null,x.en));
+      b.addEventListener("click",function(){var a2=COUNTRIES[x.f.id].a2;TCFG.countries=TCFG.countries||[];if(TCFG.countries.indexOf(a2)<0&&TCFG.countries.length<8)TCFG.countries.push(a2);saveCfg();chips();tq.value="";tl.classList.remove("on")});tl.appendChild(b)});
+    tl.classList.add("on");
+  });
+  var ok=recSupported();
+  ["ts-rec-v","ts-rec-h"].forEach(function(id){$(id).disabled=!ok});
+  if(!ok)$("ts-recnote").textContent="이 브라우저는 화면 녹화 저장을 지원하지 않아요. 보기만 할 수 있어요.";
+  $("ts-play").addEventListener("click",function(){startTour("play")});
+  $("ts-rec-v").addEventListener("click",function(){startTour("v")});
+  $("ts-rec-h").addEventListener("click",function(){startTour("h")});
+  $("ts-x").addEventListener("click",function(){$("tsheet").hidden=true});
+  $("tsheet").addEventListener("click",function(e){if(e.target===this)this.hidden=true});
+  $("tour-btn").addEventListener("click",function(e){e.stopPropagation();$("tsheet").hidden=false});
+})();
 
 /* ---------- 앱으로 설치 (홈 화면) ---------- */
 if("serviceWorker" in navigator&&/github\.io$/.test(location.hostname)){try{navigator.serviceWorker.register("sw.js").catch(function(){})}catch(_){}}
@@ -1119,12 +1589,17 @@ function frame(t){
   issSprite.visible=!!issPos;
   aurMat.uniforms.time.value=t/1000;
   for(var sj=0;sj<STORMS.length;sj++){var sm=STORMS[sj];sm.sprite.material.rotation+=dt*(sm.pos[1]>=0?1.4:-1.4);var ss=0.055*(cam.dist-0.6);sm.sprite.scale.set(ss,ss,1);sm.sprite.visible=!hidden(sm.v)}
-  camera.position.copy(ll2v(cam.lat,cam.lon,cam.dist));camera.up.set(0,1,0);camera.lookAt(0,0,0);
+  lookCur.lerp(lookGoal,1-Math.exp(-Math.min(0.25,rdt)*1.6));
+  camera.position.copy(ll2v(cam.lat,cam.lon,cam.dist)).add(lookCur);camera.up.set(0,1,0);camera.lookAt(lookCur);
+  if(moonOn){moonNow=moonInfo(now+shiftMin*60000);moonMesh.position.copy(ll2v(moonNow.lat,moonNow.lon,MOON_D));moonMesh.lookAt(0,0,0);moonMesh.visible=camera.position.distanceTo(moonMesh.position)>0.7}else moonMesh.visible=false;
+  for(var vj=0;vj<VOLC.length;vj++){var vs=0.05*(cam.dist-0.6);VOLC[vj].sprite.scale.set(vs,vs,1);VOLC[vj].sprite.visible=!hidden(VOLC[vj].v)}
   renderer.render(scene,camera);
+  if(rec)recFrame(rdt);
   var sec=Math.floor(now/1000);
   if(sec!==lastSec){lastSec=sec;var d=new Date(now);
     clockEl.textContent=(shiftMin?"시간 이동 "+(shiftMin>0?"+":"−")+hm(Math.abs(shiftMin))+" → UTC "+new Date(now+shiftMin*60000).toISOString().slice(11,16):"UTC "+d.toISOString().slice(11,19))+" · 태양 직하점 "+Math.abs(s.lat).toFixed(1)+"°"+(s.lat>=0?"N":"S")+" "+Math.abs(s.lon).toFixed(1)+"°"+(s.lon>=0?"E":"W");
-    tickPanel();tickISS();tickCmp();
+    tickPanel();tickISS();tickCmp();tickFlights();
+    if(rec){var rs_=Math.floor((Date.now()-rec.t0)/1000);$("rec-t").textContent="REC "+Math.floor(rs_/60)+":"+(rs_%60<10?"0":"")+rs_%60}
     if(tour)$("cap-l").textContent="LIVE · UTC "+d.toISOString().slice(11,16);}
 }
 resize();

@@ -298,7 +298,7 @@ async function updateMagazines(prev) {
       const j = jobs[i++];
       if (!seen.has(j.u)) {
         const st = await status(j.u);
-        const ok = (st >= 200 && st < 400) || st === 403 || st === 401 || st === 429;
+        const ok = (st >= 200 && st < 400) || [401, 402, 403, 405, 429].includes(st);
         seen.set(j.u, { ok, st, h: ok && st < 400 ? await feedFor(j.u) : [] });
       }
     }
