@@ -36,6 +36,7 @@ jobs:
         env:
           SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
           FIRMS_KEY: ${{ secrets.FIRMS_KEY }}
+          MOFA_KEY: ${{ secrets.MOFA_KEY }}
         run: node scripts/update-data.mjs
 
       - name: Prepare site folder

@@ -400,6 +400,77 @@ async function updateFires() {
   return out.length ? { at: new Date().toISOString(), src: used, cells: out } : null;
 }
 
+// 나라별 생활·여행 정보 (하루 한 번): 비자, 플러그·전압·긴급전화, 인구·GDP, 빅맥 지수, 공휴일, 외교부 여행경보
+function csvRows(txt) {
+  const out = [];
+  for (const line of (txt || "").trim().split(/\r?\n/)) {
+    const row = []; let cur = "", q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (q) { if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; }
+      else if (ch === '"') q = true; else if (ch === ",") { row.push(cur); cur = ""; } else cur += ch;
+    }
+    row.push(cur); out.push(row);
+  }
+  return out;
+}
+async function updateFacts() {
+  const A3 = {}; list.forEach((c) => { if (c.a3) A3[c.a3] = c.a2; });
+  const facts = { at: new Date().toISOString(), visa: {}, plug: {}, econ: {}, bigmac: {}, holidays: {}, mofa: {} };
+  // 1) 비자: 한국 여권 기준 (passport-index-dataset)
+  const vcsv = csvRows(await get("https://raw.githubusercontent.com/ilyankou/passport-index-dataset/master/passport-index-tidy-iso2.csv"));
+  if (vcsv.length > 1) { const h = vcsv[0]; const iP = h.indexOf("Passport"), iD = h.indexOf("Destination"), iR = h.indexOf("Requirement");
+    for (const r of vcsv.slice(1)) if (r[iP] === "KR") facts.visa[r[iD]] = r[iR]; }
+  console.log(`facts: visa ${Object.keys(facts.visa).length}`);
+  // 2) 위키데이터: 플러그 종류, 전압, 긴급전화
+  const sparql = `SELECT ?iso ?plugLabel ?volt ?emerg WHERE { ?c wdt:P297 ?iso . ?c wdt:P31 wd:Q6256 . OPTIONAL{?c wdt:P2853 ?plug} OPTIONAL{?c wdt:P2884 ?volt} OPTIONAL{?c wdt:P2852 ?e . ?e wdt:P1329 ?emerg} SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }`;
+  let wd = null;
+  try {
+    const r = await fetch("https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(sparql), { headers: { "User-Agent": "live-earth-bot/1.0 (https://github.com/JW82-ops/live-earth)", Accept: "application/sparql-results+json" }, signal: AbortSignal.timeout(60000) });
+    if (r.ok) wd = await r.json();
+  } catch {}
+  for (const b of wd?.results?.bindings || []) {
+    const a2 = b.iso?.value; if (!a2) continue;
+    const e = (facts.plug[a2] ||= { p: [], v: [], e: [] });
+    const pl = b.plugLabel?.value; if (pl && !/^Q\d+$/.test(pl)) { const m = pl.match(/type ([A-N])\b/i); const t = m ? m[1].toUpperCase() : pl; if (!e.p.includes(t)) e.p.push(t); }
+    const v = b.volt?.value; if (v && !e.v.includes(+v)) e.v.push(+v);
+    const em = b.emerg?.value; if (em && !e.e.includes(em) && em.length <= 6) e.e.push(em);
+  }
+  console.log(`facts: wikidata ${Object.keys(facts.plug).length} countries, sample KR=${JSON.stringify(facts.plug.KR)} JP=${JSON.stringify(facts.plug.JP)} GB=${JSON.stringify(facts.plug.GB)}`);
+  // 3) 세계은행: 인구, 1인당 GDP
+  for (const [ind, key] of [["SP.POP.TOTL", "pop"], ["NY.GDP.PCAP.CD", "gdp"]]) {
+    let j; try { j = JSON.parse(await get(`https://api.worldbank.org/v2/country/all/indicator/${ind}?format=json&mrnev=1&per_page=500`)); } catch { continue; }
+    for (const r of (Array.isArray(j) && j[1]) || []) { const a2 = A3[r.countryiso3code]; if (a2 && r.value != null) (facts.econ[a2] ||= {})[key] = [Math.round(r.value), +r.date]; }
+  }
+  console.log(`facts: econ ${Object.keys(facts.econ).length}`);
+  // 4) 빅맥 지수 (The Economist)
+  const bm = csvRows(await get("https://raw.githubusercontent.com/TheEconomist/big-mac-data/master/output-data/big-mac-full-index.csv"));
+  if (bm.length > 1) { const h = bm[0], iDt = h.indexOf("date"), iA = h.indexOf("iso_a3"), iU = h.indexOf("dollar_price"), iL = h.indexOf("local_price"), iC = h.indexOf("currency_code");
+    for (const r of bm.slice(1)) { const a2 = r[iA] === "EUZ" ? null : A3[r[iA]]; if (!a2) continue; const cur = facts.bigmac[a2]; if (!cur || cur.d < r[iDt]) facts.bigmac[a2] = { d: r[iDt], usd: +(+r[iU]).toFixed(2), local: +r[iL], cur: r[iC] }; } }
+  console.log(`facts: bigmac ${Object.keys(facts.bigmac).length} (KR=${JSON.stringify(facts.bigmac.KR)})`);
+  // 5) 다가오는 공휴일 (Nager.Date)
+  let avail = []; try { avail = JSON.parse(await get("https://date.nager.at/api/v3/AvailableCountries")).map((x) => x.countryCode); } catch {}
+  for (let i = 0; i < avail.length; i += 6) {
+    await Promise.all(avail.slice(i, i + 6).map(async (cc) => {
+      try { const arr = JSON.parse(await get(`https://date.nager.at/api/v3/NextPublicHolidays/${cc}`)); if (Array.isArray(arr)) facts.holidays[cc] = arr.filter((h) => !h.counties).slice(0, 5).map((h) => [h.date, h.localName, h.name]); } catch {}
+    }));
+  }
+  console.log(`facts: holidays ${Object.keys(facts.holidays).length}`);
+  // 6) 외교부 여행경보 (공공데이터포털 키가 있을 때만)
+  if (process.env.MOFA_KEY) {
+    const url = `https://apis.data.go.kr/1262000/TravelAlarmService2/getTravelAlarmList2?serviceKey=${encodeURIComponent(process.env.MOFA_KEY)}&returnType=JSON&numOfRows=500&pageNo=1`;
+    const txt = await get(url); let j = null; try { j = JSON.parse(txt); } catch {}
+    const rows = []; (function walk(o) { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") { if (Object.keys(o).some((k) => /iso_alp2/i.test(k))) rows.push(o); else Object.values(o).forEach(walk); } })(j);
+    for (const r of rows) {
+      const k = Object.keys(r), a2 = r[k.find((x) => /iso_alp2/i.test(x))], lv = r[k.find((x) => /alarm_lvl/i.test(x))];
+      if (!a2) continue; const cur = facts.mofa[a2]; const lvl = lv == null || lv === "" ? 0 : +lv;
+      if (!cur || lvl > cur.lvl) facts.mofa[a2] = { lvl, region: r[k.find((x) => /region_ty/i.test(x))] || "", remark: String(r[k.find((x) => /remark/i.test(x))] || "").slice(0, 160) };
+    }
+    console.log(`facts: mofa ${Object.keys(facts.mofa).length}` + (rows.length ? "" : " (no rows; response starts: " + String(txt || "").slice(0, 120).replace(/\s+/g, " ") + ")"));
+  } else console.log("facts: mofa skipped (no MOFA_KEY)");
+  return Object.keys(facts.visa).length || Object.keys(facts.econ).length ? facts : null;
+}
+
 async function keepOrPrev(name, fresh) {
   if (fresh) return fresh;
   if (process.env.SITE_URL) {
@@ -418,12 +489,14 @@ if (!prev.items) {
   try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
 }
 
-const [prevMag, prevAir, prevWind, prevSats, prevQY, prevFires] = await Promise.all(["magazines.json", "air.json", "wind.json", "sats.json", "quakes-year.json", "fires.json"].map(prevSite));
+const [prevMag, prevAir, prevWind, prevSats, prevQY, prevFires, prevFacts] = await Promise.all(["magazines.json", "air.json", "wind.json", "sats.json", "quakes-year.json", "fires.json", "facts.json"].map(prevSite));
 const maybe = (prev, hours, fn, label) => isFresh(prev, hours) ? (console.log(`${label}: reuse (fresh)`), Promise.resolve(prev)) : fn().then((v) => v || prev);
 let [{ items, ok }, clouds, quakes, iss, storms, aurora, fxhist, air, volcanoes, magazines] = await Promise.all([
   updateNews(), updateClouds(), updateQuakes(), updateIss(), updateStorms(), updateAurora(), updateFxHist(),
   maybe(prevAir, 2.9, updateAir, "air"), updateVolcanoes(), updateMagazines(prevMag),
 ]);
+const facts = await maybe(prevFacts?.visa && Object.keys(prevFacts.visa).length ? prevFacts : null, 20, updateFacts, "facts");
+if (facts) await writeFile(new URL("facts.json", DATA), JSON.stringify(facts));
 const [wind, sats, quakesYear, fires] = await Promise.all([
   maybe(prevWind, 5.9, updateWind, "wind"), maybe(prevSats, 11.9, updateSats, "sats"),
   maybe(prevQY, 20, updateQuakesYear, "quakes-year"), maybe(prevFires?.cells?.length ? prevFires : null, 2.9, updateFires, "fires"),
