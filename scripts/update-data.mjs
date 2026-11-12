@@ -227,6 +227,94 @@ async function updateFxHist() {
   return { at: new Date().toISOString(), dates, rates };
 }
 
+// 미세먼지: 각 나라 수도 + 한국 주요 도시 (Open-Meteo 대기질)
+const KR_CITIES = [["부산", 35.18, 129.08], ["인천", 37.46, 126.71], ["대구", 35.87, 128.6], ["대전", 36.35, 127.38], ["광주", 35.16, 126.85], ["울산", 35.54, 129.31], ["수원", 37.26, 127.03], ["제주", 33.5, 126.53], ["강릉", 37.75, 128.9], ["전주", 35.82, 127.15]];
+async function updateAir() {
+  const pts = list.filter((c) => c.lat != null).map((c) => ({ a2: c.a2, name: c.cap || c.ko, lat: c.lat, lon: c.lng }));
+  for (const [n, la, lo] of KR_CITIES) pts.push({ a2: "KR", name: n, lat: la, lon: lo, city: 1 });
+  const items = [];
+  for (let i = 0; i < pts.length; i += 80) {
+    const b = pts.slice(i, i + 80);
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${b.map((p) => p.lat.toFixed(2)).join(",")}&longitude=${b.map((p) => p.lon.toFixed(2)).join(",")}&current=pm2_5,pm10,us_aqi`;
+    let j; try { j = JSON.parse(await get(url)); } catch { continue; }
+    const arr = Array.isArray(j) ? j : [j];
+    arr.forEach((r, k) => { const c = r?.current; if (c && c.pm2_5 != null) items.push({ ...b[k], pm25: c.pm2_5, pm10: c.pm10, aqi: c.us_aqi, t: c.time }); });
+    await sleep(400);
+  }
+  console.log(`air: ${items.length}/${pts.length}`);
+  return items.length ? { at: new Date().toISOString(), items } : null;
+}
+
+// 최근 화산 분화 (GDACS, 최근 120일)
+async function updateVolcanoes() {
+  let list_;
+  try { list_ = JSON.parse(await get("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=VO")).features; } catch { console.log("volcano: unavailable"); return null; }
+  if (!Array.isArray(list_)) return null;
+  const cutoff = Date.now() - 120 * 864e5, byName = new Map();
+  for (const f of list_) {
+    const p = f.properties, to = new Date((p.todate || p.fromdate) + "Z");
+    if (isNaN(to) || to < cutoff) continue;
+    const name = String(p.eventname || p.name).replace(/^Eruption\s+/i, "").trim();
+    const prev = byName.get(name);
+    if (!prev || prev.to < p.todate) byName.set(name, { name, country: p.country || "", alert: p.alertlevel, from: p.fromdate, to: p.todate, current: String(p.iscurrent) === "true", pos: f.geometry.coordinates, url: p.url?.report || "https://www.gdacs.org/" });
+  }
+  const items = [...byName.values()];
+  console.log(`volcano: ${items.length} recent (${items.map((v) => v.name).join(", ")})`);
+  return { at: new Date().toISOString(), items };
+}
+
+// 나라별 대표 매거진: 주소 확인 + 최신 기사 제목 (6시간에 한 번만 다시 확인)
+async function status(url) {
+  try {
+    const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15" }, redirect: "follow", signal: AbortSignal.timeout(15000) });
+    return r.status;
+  } catch { return 0; }
+}
+async function feedFor(base) {
+  const root = base.replace(/\/$/, "");
+  for (const path of ["/feed/rss", "/rss/all.xml/", "/feed/", "/rss.xml", "/rss", "/feed.xml"]) {
+    const xml = await get(root + path);
+    if (!xml || !/<(rss|feed)[\s>]/i.test(xml)) continue;
+    let items = parseRss(xml);
+    if (!items.length) { // Atom
+      items = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/gi)].map((m) => {
+        const t = tag(m[1], "title"), l = (m[1].match(/<link[^>]*href="([^"]+)"/i) || [])[1], d = new Date(tag(m[1], "updated") || tag(m[1], "published"));
+        return t && l && !isNaN(d) ? { t, u: l, s: "", d: d.toISOString() } : null;
+      }).filter(Boolean);
+    }
+    if (items.length >= 2) return items.sort((a, b) => b.d.localeCompare(a.d)).slice(0, 3).map((n) => ({ t: n.t.slice(0, 140), u: n.u, d: n.d }));
+  }
+  return [];
+}
+async function updateMagazines(prev) {
+  if (prev?.at && Date.now() - new Date(prev.at) < 6 * 3600e3 && prev.items) { console.log("magazines: reuse (fresh)"); return prev; }
+  const src = JSON.parse(await readFile(new URL("scripts/magazines-src.json", ROOT), "utf8"));
+  const jobs = [];
+  for (const [a2, arr] of Object.entries(src)) if (a2[0] !== "_") for (const [n, k, u] of arr) jobs.push({ a2, n, k, u });
+  const seen = new Map();
+  let i = 0;
+  async function worker() {
+    while (i < jobs.length) {
+      const j = jobs[i++];
+      if (!seen.has(j.u)) {
+        const st = await status(j.u);
+        const ok = (st >= 200 && st < 400) || st === 403 || st === 401 || st === 429;
+        seen.set(j.u, { ok, st, h: ok && st < 400 ? await feedFor(j.u) : [] });
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: 8 }, worker));
+  const items = {}, dead = [];
+  for (const j of jobs) {
+    const r = seen.get(j.u);
+    if (!r.ok) { dead.push(`${j.n}(${r.st})`); continue; }
+    (items[j.a2] ||= []).push({ n: j.n, k: j.k, u: j.u, h: r.h });
+  }
+  const withH = [...seen.values()].filter((r) => r.h.length).length;
+  console.log(`magazines: ${jobs.length - dead.length}/${jobs.length} links ok, ${withH} with headlines; dead: ${dead.join(", ") || "none"}`);
+  return { at: new Date().toISOString(), items };
+}
+
 async function keepOrPrev(name, fresh) {
   if (fresh) return fresh;
   if (process.env.SITE_URL) {
@@ -245,9 +333,15 @@ if (!prev.items) {
   try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
 }
 
-let [{ items, ok }, clouds, quakes, iss, storms, aurora, fxhist] = await Promise.all([
+let prevMag = null;
+if (process.env.SITE_URL) { try { prevMag = JSON.parse((await get(process.env.SITE_URL + "data/magazines.json")) || "null"); } catch {} }
+let [{ items, ok }, clouds, quakes, iss, storms, aurora, fxhist, air, volcanoes, magazines] = await Promise.all([
   updateNews(), updateClouds(), updateQuakes(), updateIss(), updateStorms(), updateAurora(), updateFxHist(),
+  updateAir(), updateVolcanoes(), updateMagazines(prevMag),
 ]);
+air = await keepOrPrev("air.json", air);
+volcanoes = await keepOrPrev("volcanoes.json", volcanoes);
+for (const [n, v] of [["air.json", air], ["volcanoes.json", volcanoes], ["magazines.json", magazines]]) if (v) await writeFile(new URL(n, DATA), JSON.stringify(v));
 quakes = await keepOrPrev("quakes.json", quakes);
 iss = await keepOrPrev("iss.json", iss);
 storms = await keepOrPrev("storms.json", storms);
