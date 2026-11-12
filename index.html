@@ -757,7 +757,7 @@ function findCountry(lat,lon){
 
 /* ---------- 카메라·터치 ---------- */
 var cam={lon:127.5,lat:24,dist:3.2,vLon:0,vLat:0}, target=null, fitDist=3, lastTouch=0;
-function clampCam(){cam.lat=Math.max(-85,Math.min(85,cam.lat));cam.dist=Math.max(1.035,Math.min(Math.max(7,fitDist*1.4,tour?24:0),cam.dist))}
+function clampCam(){cam.lat=Math.max(-85,Math.min(85,cam.lat));cam.dist=Math.max(1.14,Math.min(Math.max(7,fitDist*1.4,tour?24:0),cam.dist))}
 function resize(){
   if(rec){layoutRec();return}
   var w=stage.clientWidth||innerWidth,h=stage.clientHeight||innerHeight;
@@ -1018,7 +1018,7 @@ nowBtn.addEventListener("click",function(){setShift(0)});
 $("cloud").addEventListener("click",function(){clouds.visible=!clouds.visible;this.setAttribute("aria-pressed",clouds.visible?"true":"false")});
 
 var q=$("q"),qList=$("q-list"),index=[];
-features.forEach(function(f){var c=COUNTRIES[f.id];index.push({f:f,ko:c?c.ko:f.properties.name,en:(c?c.en:f.properties.name),flag:c?c.flag:"",key:((c?c.ko+" "+c.en+" "+c.a2+" "+(c.cap||""):f.properties.name)).toLowerCase()})});
+features.forEach(function(f){var c=COUNTRIES[f.id];index.push({f:f,ko:c?c.ko:f.properties.name,en:(c?c.en:f.properties.name),flag:c?c.flag:"",key:((c?c.ko+" "+c.en+" "+c.a2+" "+(c.a3||"")+" "+(c.kof||"")+" "+(c.cap||"")+(c.a2==="KR"?" 대한민국 남한":"")+(c.a2==="US"?" 미국":"")+(c.a2==="GB"?" 영국 uk":""):f.properties.name)).toLowerCase()})});
 function showResults(){
   var v=q.value.trim().toLowerCase();qList.textContent="";
   if(!v){qList.classList.remove("on");return}
@@ -2627,7 +2627,7 @@ function frame(t){
       if(Math.abs(dl)<0.05&&Math.abs(target.lat-cam.lat)<0.05)target=null;
     }else{
       cam.lon+=cam.vLon;cam.lat+=cam.vLat;var f=Math.exp(-dt*3.2);cam.vLon*=f;cam.vLat*=f;
-      if(!current&&!reduceMotion&&t-lastTouch>2500)cam.lon+=dt*2.2;
+      if(!current&&!reduceMotion&&t-lastTouch>2500)cam.lon+=dt*2.2*Math.min(1,Math.max(0.05,(cam.dist-1)/Math.max(0.3,fitDist-1)));
     }
     clampCam();
   }
