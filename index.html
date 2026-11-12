@@ -39,7 +39,7 @@
   --font-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0}
-html,body{height:100%}
+html,body{height:100%;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--space);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 #stage{position:fixed;inset:0;touch-action:none;cursor:grab}
 #stage.drag{cursor:grabbing}
@@ -300,6 +300,7 @@ body.recording #caption,body.recording #tourhint{visibility:hidden}
   .ts-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:720px){
+  #q,#ts-q,.calc-row input{font-size:16px}
   .tools .mini,.layers .mini{min-height:40px;font-size:13px;padding:8px 12px}
   .hrow .mini{min-height:32px;font-size:12px;padding:5px 11px}
   .p-head .mini,#close,.xbtn{min-width:40px;height:40px}
@@ -2555,6 +2556,17 @@ function endOnb(){$("onb").hidden=true;try{localStorage.setItem("le-onb","1")}ca
 $("onb-next").addEventListener("click",function(){if(onbI<ONB.length-1)showOnb(onbI+1);else endOnb()});
 $("onb-skip").addEventListener("click",endOnb);
 try{if(!localStorage.getItem("le-onb"))setTimeout(function(){if(!tour)showOnb(0)},1200)}catch(_){}
+
+/* 아이폰: 페이지 확대 막기, 입력 뒤 확대가 남아 있으면 원래 배율로 되돌리기 */
+document.addEventListener("gesturestart",function(e){e.preventDefault()},{passive:false});
+document.addEventListener("gesturechange",function(e){e.preventDefault()},{passive:false});
+(function(){
+  var m=document.querySelector('meta[name="viewport"]');if(!m)return;var base=m.getAttribute("content");
+  function reset(){m.setAttribute("content",base.replace(/initial-scale=[\d.]+/,"initial-scale=1.0001"));setTimeout(function(){m.setAttribute("content",base)},250)}
+  document.addEventListener("focusout",function(e){if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))reset()});
+  window.addEventListener("orientationchange",reset);
+  if(window.visualViewport)visualViewport.addEventListener("resize",function(){if(visualViewport.scale>1.01&&!(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)))reset()});
+})();
 
 /* 타임랩스·언어 버튼 */
 $("tl-play").addEventListener("click",function(){startTimelapse("play")});
