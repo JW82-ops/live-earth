@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>라이브 어스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 한 화면짜리 우주 뷰: 캔버스가 전부를 채우고, 정보는 유리판 한 장(데스크톱 오른쪽, 휴대폰 아래)에만 올린다 */
+  color-scheme:dark;
+  --space:#03060b;
+  --panel:rgba(9,14,23,.86);
+  --ink:#e9eef5;
+  --muted:#8d9aae;
+  --line:rgba(255,255,255,.1);
+  --sun:#ffb454;
+  --live:#5ee08a;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--space);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+#stage{position:fixed;inset:0;touch-action:none;cursor:grab}
+#stage.drag{cursor:grabbing}
+#stage canvas{display:block;width:100%;height:100%}
+.hud{position:fixed;top:0;left:0;padding:16px;display:flex;flex-direction:column;gap:4px;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.hud h1{font-size:17px;font-weight:600;letter-spacing:.02em}
+.hud .clock{font-family:var(--font-num);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tools{display:flex;flex-direction:column;gap:8px;margin-top:8px;width:min(270px,calc(100vw - 32px));pointer-events:auto;text-shadow:none}
+.search{position:relative}
+#q{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(9,14,23,.72);color:var(--ink);font:inherit;font-size:14px;padding:0 12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#q::placeholder{color:var(--muted)}
+#q:focus-visible,.tools button:focus-visible,#when:focus-visible{outline:2px solid var(--sun);outline-offset:1px}
+#q-list{position:absolute;top:42px;left:0;right:0;background:rgba(9,14,23,.96);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:none;flex-direction:column;z-index:5}
+#q-list.on{display:flex}
+#q-list button{appearance:none;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:14px;text-align:left;padding:9px 12px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+#q-list button:last-child{border-bottom:0}
+#q-list button:hover{background:rgba(255,255,255,.07)}
+#q-list small{color:var(--muted);font-size:12px}
+.timebar{display:flex;align-items:center;gap:8px;background:rgba(9,14,23,.72);border:1px solid var(--line);border-radius:10px;padding:6px 10px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.timebar label{font-size:12px;color:var(--muted);white-space:nowrap}
+#when{flex:1;min-width:0;accent-color:var(--sun)}
+.tools .mini{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font:inherit;font-size:12px;border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap}
+.tools .mini[aria-pressed="false"]{color:var(--muted)}
+.tools .mini:disabled{opacity:.4;cursor:default}
+.hint{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--muted);pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.9)}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);pointer-events:none;transition:opacity .6s}
+#loading.done{opacity:0}
+
+#panel{position:fixed;top:16px;right:16px;bottom:16px;width:360px;background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:flex;flex-direction:column;transform:translateX(calc(100% + 24px));transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#panel.open{transform:none}
+.p-head{display:flex;gap:12px;align-items:flex-start;padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+.flag{font-size:34px;line-height:1}
+.p-title{flex:1;min-width:0}
+.p-title h2{font-size:22px;font-weight:600;line-height:1.2;text-wrap:balance}
+.p-title p{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+#close{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink);width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;flex:none}
+#close:focus-visible,a:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.p-body{overflow-y:auto;padding:4px 18px 18px;display:flex;flex-direction:column}
+section{padding:14px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+section:last-child{border-bottom:0}
+.s-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.s-head h3{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.06em}
+.chip{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sun)}
+.chip.live{color:var(--live);border-color:rgba(94,224,138,.35)}
+.chip.live::before{background:var(--live)}
+.big{font-family:var(--font-num);font-size:28px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.15}
+.sub{font-size:13px;color:var(--muted)}
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.row b{font-family:var(--font-num);font-weight:500;font-variant-numeric:tabular-nums;text-align:right}
+.row span{color:var(--muted)}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{color:var(--ink);text-decoration:none;font-size:13px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.links a::after{content:" ↗";color:var(--sun)}
+.links a:hover{background:rgba(255,255,255,.09)}
+.note{font-size:12px;color:var(--muted)}
+.news{display:flex;flex-direction:column}
+.news>a{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.news>a:last-child{border-bottom:0}
+.news>a:hover strong{text-decoration:underline;text-decoration-color:var(--sun);text-underline-offset:3px}
+.news strong{font-size:14px;font-weight:500;line-height:1.45}
+.news small{font-size:12px;color:var(--muted)}
+.more{margin-top:6px}
+.sky{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.sky i{width:10px;height:10px;border-radius:50%;background:var(--sun);box-shadow:0 0 10px var(--sun)}
+.sky.night i{background:#6f86c9;box-shadow:0 0 10px #6f86c9}
+.sky.dusk i{background:#e0785a;box-shadow:0 0 10px #e0785a}
+
+@media (max-width:720px){
+  #panel{top:auto;left:8px;right:8px;bottom:8px;width:auto;height:54%;transform:translateY(calc(100% + 16px))}
+  .hint{display:none}
+  .p-title h2{font-size:20px}
+}
+@media (prefers-reduced-motion:reduce){#panel{transition:none}}
+</style>
+</head>
+<body>
+<div id="stage" aria-label="3D 지구. 드래그로 회전, 핀치나 휠로 확대, 나라를 눌러 정보 보기"></div>
+<div id="loading">지구를 불러오는 중…</div>
+
+<div class="hud">
+  <h1>라이브 어스</h1>
+  <div class="clock" id="clock">UTC --:--:--</div>
+  <div class="tools">
+    <div class="search">
+      <input id="q" type="search" placeholder="나라 검색 (예: 프랑스, Japan)" autocomplete="off" aria-label="나라 검색">
+      <div id="q-list" role="listbox"></div>
+    </div>
+    <div class="timebar">
+      <label for="when" id="when-label">시간 이동</label>
+      <input id="when" type="range" min="-720" max="720" step="10" value="0" aria-label="낮과 밤을 앞뒤 12시간까지 이동">
+      <button class="mini" id="now" type="button" disabled>지금</button>
+      <button class="mini" id="cloud" type="button" aria-pressed="true" title="연출용 구름 (실제 구름 아님)">구름</button>
+    </div>
+  </div>
+</div>
+<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 나라를 누르면 정보</div>
+
+<aside id="panel" aria-live="polite">
+  <div class="p-head">
+    <div class="flag" id="p-flag"></div>
+    <div class="p-title"><h2 id="p-name"></h2><p id="p-sub"></p></div>
+    <button id="close" type="button" aria-label="패널 닫기">×</button>
+  </div>
+  <div class="p-body">
+    <section>
+      <div class="s-head"><h3>현지 시각</h3><span class="chip live">실시간</span></div>
+      <div class="big" id="p-time">--:--:--</div>
+      <div class="sub" id="p-date"></div>
+      <div class="sky" id="p-sky"><i></i><span></span></div>
+    </section>
+    <section>
+      <div class="s-head"><h3>기본 정보</h3></div>
+      <div class="rows" id="p-info"></div>
+    </section>
+    <section>
+      <div class="s-head"><h3>환율</h3><span class="chip" id="fx-chip"></span></div>
+      <div class="rows" id="p-fx"></div>
+    </section>
+    <section>
+      <div class="s-head"><h3>날씨</h3><span class="chip" id="wx-chip"></span></div>
+      <div id="p-wx"></div>
+    </section>
+    <section>
+      <div class="s-head"><h3>최신 뉴스</h3><span class="chip" id="news-chip"></span></div>
+      <div class="links" id="p-news"></div>
+    </section>
+    <section>
+      <div class="s-head"><h3>음악</h3><span class="chip">YouTube에서 열기</span></div>
+      <div class="links" id="p-music"></div>
+    </section>
+  </div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="countries.js"></script>
+<script src="world.js"></script>
+<script src="snapshot.js"></script>
+<script>
+(function(){
+"use strict";
+var D2R=Math.PI/180, R2D=180/Math.PI;
+var $=function(id){return document.getElementById(id)};
+var stage=$("stage"), panel=$("panel");
+var reduceMotion=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 좌표 ---------- */
+function ll2v(lat,lon,r){var a=lat*D2R,b=lon*D2R,c=Math.cos(a);return new THREE.Vector3(r*c*Math.cos(b),r*Math.sin(a),-r*c*Math.sin(b))}
+function sunLL(ms){ // 지금 태양이 머리 위에 있는 지점
+  var d=ms/86400000-10957.5;
+  var g=(357.529+0.98560028*d)*D2R, q=280.459+0.98564736*d;
+  var L=(q+1.915*Math.sin(g)+0.020*Math.sin(2*g))*D2R, e=(23.439-0.00000036*d)*D2R;
+  var ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L))*R2D, dec=Math.asin(Math.sin(e)*Math.sin(L))*R2D;
+  var gmst=(18.697374558+24.06570982441908*d)*15;
+  var lon=((ra-gmst)%360+540)%360-180;
+  return {lat:dec,lon:lon};
+}
+
+/* ---------- 장면 ---------- */
+var renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"})}
+catch(err){$("loading").textContent="이 기기에서는 3D(WebGL)를 켤 수 없어요.";return}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.setClearColor(0x03060b,1);
+stage.appendChild(renderer.domElement);
+var scene=new THREE.Scene();
+var camera=new THREE.PerspectiveCamera(38,1,0.05,400);
+var sunDir=new THREE.Vector3(1,0,0);
+
+var loader=new THREE.TextureLoader(), pending=4;
+function tex(src){
+  var t=loader.load(src,function(){if(--pending===0)$("loading").classList.add("done")},undefined,function(){$("loading").textContent="지구 이미지를 불러오지 못했어요. 새로고침해 주세요."});
+  t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+  t.minFilter=THREE.LinearMipmapLinearFilter;t.wrapS=THREE.RepeatWrapping;
+  return t;
+}
+var earthMat=new THREE.ShaderMaterial({
+  uniforms:{dayMap:{value:tex("earth-blue-marble.jpg")},nightMap:{value:tex("earth-night.jpg")},topoMap:{value:tex("earth-topology.png")},waterMap:{value:tex("earth-water.png")},sunDir:{value:sunDir}},
+  extensions:{derivatives:true},
+  vertexShader:"varying vec2 vUv;varying vec3 vN;varying vec3 vP;void main(){vUv=uv;vN=normalize(normal);vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:[
+  "uniform sampler2D dayMap,nightMap,topoMap,waterMap;uniform vec3 sunDir;varying vec2 vUv;varying vec3 vN;varying vec3 vP;",
+  "void main(){",
+  " vec3 N=normalize(vN);vec3 V=normalize(cameraPosition-vP);",
+  " vec2 dx=dFdx(vUv),dy=dFdy(vUv);float h=texture2D(topoMap,vUv).r;",
+  " float bx=texture2D(topoMap,vUv+dx).r-h,by=texture2D(topoMap,vUv+dy).r-h;",
+  " vec3 sx=dFdx(vP),sy=dFdy(vP);vec3 r1=cross(sy,N),r2=cross(N,sx);float det=dot(sx,r1);",
+  " vec3 Nb=normalize(abs(det)*N-0.035*sign(det)*(bx*r1+by*r2));",
+  " float nd=dot(N,sunDir);float day=smoothstep(-0.10,0.22,nd);",
+  " float diff=max(dot(Nb,sunDir),0.0);",
+  " vec3 base=texture2D(dayMap,vUv).rgb;",
+  " float water=texture2D(waterMap,vUv).r;",
+  " vec3 lit=base*(0.05+1.18*diff);",
+  " vec3 H=normalize(sunDir+V);float spec=pow(max(dot(Nb,H),0.0),70.0)*water*0.65*day;",
+  " lit+=vec3(1.0,0.93,0.8)*spec;",
+  " vec3 nightC=texture2D(nightMap,vUv).rgb;nightC=nightC*(0.55+nightC)*vec3(2.3,1.8,1.2)+base*0.06;",
+  " vec3 col=mix(nightC,lit,day);",
+  " float tw=smoothstep(-0.12,0.02,nd)*(1.0-smoothstep(0.02,0.3,nd));col+=vec3(0.55,0.22,0.08)*tw*0.16;",
+  " float fr=pow(1.0-max(dot(N,V),0.0),2.6);",
+  " col+=vec3(0.30,0.55,1.0)*fr*(0.10+0.75*smoothstep(-0.25,0.35,nd));",
+  " gl_FragColor=vec4(col,1.0);",
+  "}"].join("\n")
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(1,192,96),earthMat));
+
+var atmMat=new THREE.ShaderMaterial({
+  uniforms:{sunDir:{value:sunDir}},side:THREE.BackSide,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,
+  vertexShader:"varying vec3 vN;varying vec3 vP;void main(){vN=normalize(normal);vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:"uniform vec3 sunDir;varying vec3 vN;varying vec3 vP;void main(){vec3 V=normalize(cameraPosition-vP);float rim=pow(max(dot(-vN,V),0.0),0.0);float e=max(dot(vN,-V),0.0);float a=pow(clamp(1.0-e,0.0,1.0),0.0);float g=pow(e,3.5);float s=smoothstep(-0.45,0.5,dot(normalize(vP),sunDir));gl_FragColor=vec4(vec3(0.28,0.55,1.0)*g*(0.12+0.88*s)*1.6*rim*a,1.0);}"
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.16,96,48),atmMat));
+
+/* 구름 (연출용: 실제 위성 구름이 아님) */
+var cloudMat=new THREE.ShaderMaterial({
+  uniforms:{sunDir:{value:sunDir},t:{value:0},cloudMap:{value:null},useMap:{value:0}},transparent:true,depthWrite:false,
+  vertexShader:"varying vec3 vP;varying vec2 vUv;void main(){vP=position;vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+  fragmentShader:[
+  "uniform vec3 sunDir;uniform float t;uniform sampler2D cloudMap;uniform float useMap;varying vec3 vP;varying vec2 vUv;",
+  "float hash(vec3 p){p=fract(p*0.3183099+0.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}",
+  "float noise(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.0-2.0*f);",
+  " return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),",
+  "  mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}",
+  "float fbm(vec3 p){float a=0.5,s=0.0;for(int i=0;i<5;i++){s+=a*noise(p);p=p*2.03+vec3(1.7,9.2,3.1);a*=0.5;}return s;}",
+  "void main(){",
+  " vec3 p=normalize(vP);float c=cos(t),s=sin(t);vec3 q=vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);",
+  " vec3 w=q*vec3(3.3,5.4,3.3);",
+  " float warp=fbm(w*0.7+vec3(0.0,t*3.0,0.0));",
+  " float d=fbm(w+1.9*vec3(warp,0.35*warp,-warp)+4.0);",
+  " float cov=0.53-0.07*cos(p.y*p.y*13.0);",
+  " float a=smoothstep(cov,cov+0.15,d)*(0.75+0.25*noise(w*6.0));",
+  " if(useMap>0.5){vec4 m=texture2D(cloudMap,vUv);a=smoothstep(0.12,0.85,m.r*m.a);}",
+  " float nd=dot(p,sunDir);float day=smoothstep(-0.15,0.25,nd);",
+  " vec3 col=vec3(1.0)*(0.05+0.97*pow(clamp(nd,0.0,1.0),0.65));",
+  " float tw=smoothstep(-0.12,0.02,nd)*(1.0-smoothstep(0.02,0.3,nd));col+=vec3(0.6,0.3,0.15)*tw*0.35;",
+  " gl_FragColor=vec4(col,a*0.82*mix(0.22,1.0,day));",
+  "}"].join("\n")
+});
+var clouds=new THREE.Mesh(new THREE.SphereGeometry(1.008,128,64),cloudMat);clouds.renderOrder=1;scene.add(clouds);
+
+/* 태양 */
+(function(){
+  var cv=document.createElement("canvas");cv.width=cv.height=256;var g=cv.getContext("2d");
+  var gr=g.createRadialGradient(128,128,0,128,128,128);
+  gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(0.06,"rgba(255,246,220,1)");gr.addColorStop(0.16,"rgba(255,200,120,.45)");gr.addColorStop(0.45,"rgba(255,160,80,.10)");gr.addColorStop(1,"rgba(255,140,60,0)");
+  g.fillStyle=gr;g.fillRect(0,0,256,256);
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
+  sp.scale.setScalar(46);scene.add(sp);window.__sun=sp;
+})();
+
+/* 별 */
+(function(){
+  var n=2600,pos=new Float32Array(n*3),col=new Float32Array(n*3);
+  for(var i=0;i<n;i++){
+    var u=Math.random()*2-1,t=Math.random()*Math.PI*2,s=Math.sqrt(1-u*u),r=120;
+    pos[i*3]=r*s*Math.cos(t);pos[i*3+1]=r*u;pos[i*3+2]=r*s*Math.sin(t);
+    var b=0.25+Math.pow(Math.random(),3)*0.75,w=Math.random();
+    col[i*3]=b*(0.85+0.15*w);col[i*3+1]=b*0.9;col[i*3+2]=b*(1.0-0.15*w);
+  }
+  var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("color",new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:1.6*renderer.getPixelRatio(),sizeAttenuation:false,vertexColors:true,depthWrite:false})));
+})();
+
+/* 국경선 */
+function lineGeom(lines,r){
+  var a=[];
+  for(var i=0;i<lines.length;i++){var L=lines[i];
+    for(var j=0;j<L.length-1;j++){var p=ll2v(L[j][1],L[j][0],r),q=ll2v(L[j+1][1],L[j+1][0],r);a.push(p.x,p.y,p.z,q.x,q.y,q.z)}}
+  var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(new Float32Array(a),3));return g;
+}
+var features=[];
+try{
+  var obj=TOPO.objects.countries;
+  scene.add(new THREE.LineSegments(lineGeom(topojson.mesh(TOPO,obj).coordinates,1.0015),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.2,depthWrite:false})));
+  scene.children[scene.children.length-1].renderOrder=2;
+  features=topojson.feature(TOPO,obj).features;
+  features.forEach(function(f){
+    var polys=f.geometry.type==="Polygon"?[f.geometry.coordinates]:f.geometry.coordinates;
+    f.polys=polys;var b=[180,90,-180,-90];
+    polys.forEach(function(p){p[0].forEach(function(c){if(c[0]<b[0])b[0]=c[0];if(c[0]>b[2])b[2]=c[0];if(c[1]<b[1])b[1]=c[1];if(c[1]>b[3])b[3]=c[1]})});
+    f.bbox=b;
+  });
+}catch(err){}
+var selLines=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffb454,transparent:true,opacity:1,depthWrite:false}));
+var selGlow=new THREE.LineSegments(selLines.geometry,new THREE.LineBasicMaterial({color:0xffb454,transparent:true,opacity:0.35,depthWrite:false}));
+selGlow.scale.setScalar(1.002);selLines.renderOrder=selGlow.renderOrder=3;scene.add(selLines,selGlow);
+var arc=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffd9a0,transparent:true,opacity:0.95,depthWrite:false}));arc.renderOrder=4;scene.add(arc);
+var SEOUL={lat:37.57,lng:126.98};
+function arcTo(c){
+  arc.geometry.dispose();
+  if(!c||c.lat==null||c.a2==="KR"){arc.geometry=new THREE.BufferGeometry();return null}
+  var a=ll2v(SEOUL.lat,SEOUL.lng,1),b=ll2v(c.lat,c.lng,1),ang=a.angleTo(b),n=72,pts=new Float32Array((n+1)*3),v=new THREE.Vector3();
+  var h=Math.min(0.2,0.02+ang*0.07),sn=Math.sin(ang)||1;
+  for(var i=0;i<=n;i++){var u=i/n;
+    v.copy(a).multiplyScalar(Math.sin((1-u)*ang)/sn).addScaledVector(b,Math.sin(u*ang)/sn).normalize().multiplyScalar(1.012+h*Math.sin(Math.PI*u));
+    pts[i*3]=v.x;pts[i*3+1]=v.y;pts[i*3+2]=v.z}
+  var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pts,3));arc.geometry=g;
+  return ang*6371;
+}
+
+function inRing(x,y,ring){var c=false;for(var i=0,j=ring.length-1;i<ring.length;j=i++){var xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c}
+function findCountry(lat,lon){
+  for(var i=0;i<features.length;i++){var f=features[i],b=f.bbox;
+    if(lon<b[0]||lon>b[2]||lat<b[1]||lat>b[3])continue;
+    for(var k=0;k<f.polys.length;k++){var p=f.polys[k];
+      if(inRing(lon,lat,p[0])){var hole=false;for(var h=1;h<p.length;h++)if(inRing(lon,lat,p[h])){hole=true;break}if(!hole)return f}}}
+  return null;
+}
+
+/* ---------- 카메라·터치 ---------- */
+var cam={lon:127.5,lat:24,dist:3.2,vLon:0,vLat:0}, target=null, fitDist=3, lastTouch=0;
+function clampCam(){cam.lat=Math.max(-85,Math.min(85,cam.lat));cam.dist=Math.max(1.22,Math.min(Math.max(7,fitDist*1.4),cam.dist))}
+function resize(){
+  var w=stage.clientWidth||innerWidth,h=stage.clientHeight||innerHeight;
+  renderer.setSize(w,h,false);camera.aspect=w/h;
+  var narrow=w<=720, ph=(narrow&&panel.classList.contains("open"))?panel.offsetHeight+8:0;
+  var pw=(!narrow&&panel.classList.contains("open"))?panel.offsetWidth+16:0;
+  if(ph||pw)camera.setViewOffset(w,h,pw/2,ph/2,w,h);else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+  var freeW=w-pw,freeH=h-ph, vf=camera.fov*D2R/2, tanV=Math.tan(vf);
+  var halfV=Math.atan(tanV*freeH/h), halfH=Math.atan(tanV*freeW/h);
+  var newFit=1/Math.sin(Math.min(halfV,halfH)*0.84);
+  if(Math.abs(cam.dist-fitDist)<0.02||!resize.done)cam.dist=newFit;
+  fitDist=newFit;resize.done=true;clampCam();
+}
+window.addEventListener("resize",resize);
+
+var ptrs={},nPtr=0,pinch0=0,dist0=0,down=null,moved=0;
+function pcount(){return Object.keys(ptrs).length}
+stage.addEventListener("pointerdown",function(e){
+  try{stage.setPointerCapture(e.pointerId)}catch(_){}
+  ptrs[e.pointerId]={x:e.clientX,y:e.clientY};lastTouch=performance.now();target=null;cam.vLon=cam.vLat=0;
+  if(pcount()===1){down={x:e.clientX,y:e.clientY,t:performance.now()};moved=0;stage.classList.add("drag")}
+  else{down=null;var k=Object.keys(ptrs);pinch0=Math.hypot(ptrs[k[0]].x-ptrs[k[1]].x,ptrs[k[0]].y-ptrs[k[1]].y);dist0=cam.dist}
+});
+stage.addEventListener("pointermove",function(e){
+  var p=ptrs[e.pointerId];if(!p)return;
+  var dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;lastTouch=performance.now();
+  if(pcount()===1){
+    moved+=Math.abs(dx)+Math.abs(dy);
+    var k=(cam.dist-1)*0.115*(900/Math.max(stage.clientHeight,320));
+    cam.vLon=-dx*k;cam.vLat=dy*k;cam.lon+=cam.vLon;cam.lat+=cam.vLat;clampCam();
+  }else if(pcount()===2){
+    var ks=Object.keys(ptrs),d=Math.hypot(ptrs[ks[0]].x-ptrs[ks[1]].x,ptrs[ks[0]].y-ptrs[ks[1]].y);
+    if(pinch0>0&&d>0){cam.dist=1+(dist0-1)*pinch0/d;clampCam()}
+  }
+});
+function up(e){
+  if(!ptrs[e.pointerId])return;delete ptrs[e.pointerId];lastTouch=performance.now();
+  if(pcount()===0){stage.classList.remove("drag");
+    if(down&&moved<9&&performance.now()-down.t<450){cam.vLon=cam.vLat=0;pick(e.clientX,e.clientY)}
+    down=null}
+  else{down=null;moved=99}
+}
+stage.addEventListener("pointerup",up);stage.addEventListener("pointercancel",up);
+stage.addEventListener("wheel",function(e){e.preventDefault();cam.dist=1+(cam.dist-1)*Math.exp(e.deltaY*0.0012);clampCam();lastTouch=performance.now()},{passive:false});
+
+var ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),sphere=new THREE.Sphere(new THREE.Vector3(),1),hit=new THREE.Vector3();
+function pick(x,y){
+  var r=renderer.domElement.getBoundingClientRect();
+  ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
+  if(!ray.ray.intersectSphere(sphere,hit))return;
+  var lat=Math.asin(Math.max(-1,Math.min(1,hit.y)))*R2D,lon=Math.atan2(-hit.z,hit.x)*R2D;
+  var f=findCountry(lat,lon);if(f)select(f,true);
+}
+
+/* ---------- 데이터 ---------- */
+var SNAP=window.SNAPSHOT||{rates:null,ratesAt:null};
+var rates=SNAP.rates,ratesLive=false,ratesAt=SNAP.ratesAt,wxBlocked=false,current=null,wxCache={};
+var curNames=null,nf=function(v,d){return v.toLocaleString("ko-KR",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:0})};
+try{curNames=new Intl.DisplayNames(["ko"],{type:"currency"})}catch(_){}
+function curName(c){try{return curNames?curNames.of(c):c}catch(_){return c}}
+function timeout(ms){if(window.AbortController){var a=new AbortController();setTimeout(function(){a.abort()},ms);return a.signal}}
+function getJSON(u){return fetch(u,{signal:timeout(7000)}).then(function(r){if(!r.ok)throw 0;return r.json()})}
+
+getJSON("https://open.er-api.com/v6/latest/USD").then(function(j){
+  if(j&&j.rates&&j.rates.KRW){rates=j.rates;ratesLive=true;ratesAt=new Date().toISOString();if(current)renderFx(current.c)}
+}).catch(function(){});
+
+var WMO={0:"맑음",1:"대체로 맑음",2:"구름 조금",3:"흐림",45:"안개",48:"서리 안개",51:"약한 이슬비",53:"이슬비",55:"강한 이슬비",56:"어는 이슬비",57:"어는 이슬비",61:"약한 비",63:"비",65:"강한 비",66:"어는 비",67:"어는 비",71:"약한 눈",73:"눈",75:"강한 눈",77:"싸락눈",80:"약한 소나기",81:"소나기",82:"강한 소나기",85:"약한 눈 소나기",86:"강한 눈 소나기",95:"뇌우",96:"우박 동반 뇌우",99:"강한 우박 뇌우"};
+
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function row(l,v){var r=el("div","row");r.appendChild(el("span",null,l));r.appendChild(el("b",null,v));return r}
+function link(label,href){var a=el("a",null,label);a.href=href;a.target="_blank";a.rel="noopener";return a}
+
+function renderFx(c){
+  var box=$("p-fx"),chip=$("fx-chip");box.textContent="";
+  chip.className="chip"+(ratesLive?" live":"");
+  if(!rates){chip.textContent="연결 안 됨";box.appendChild(el("div","note","환율 데이터를 불러오지 못했어요."));return}
+  if(ratesLive)chip.textContent="실시간";
+  else{var d=new Date(ratesAt);chip.textContent=(d.getUTCMonth()+1)+"월 "+d.getUTCDate()+"일 기준"}
+  function krwRow(code){
+    var per=rates.KRW/rates[code],unit=per<0.02?1000:(per<2||code==="JPY"?100:1);
+    return row(nf(unit,0)+" "+code+" · "+curName(code),nf(per*unit,per*unit<10?3:2)+"원");
+  }
+  var codes=(c&&c.cur||[]).filter(function(k){return rates[k]});
+  if(c&&c.a2==="KR"){["USD","EUR","JPY","CNY","GBP"].forEach(function(k){box.appendChild(krwRow(k))});return}
+  if(!codes.length){box.appendChild(el("div","note","이 지역 통화의 환율 데이터가 없어요."));return}
+  codes.forEach(function(k){
+    if(k!=="KRW")box.appendChild(krwRow(k));
+    if(k!=="USD")box.appendChild(row("1 USD",nf(rates[k],rates[k]<10?4:2)+" "+k));
+  });
+  if(codes.indexOf("USD")<0&&codes.indexOf("KRW")<0)box.appendChild(row("1,000원",nf(1000/rates.KRW*rates[codes[0]],3)+" "+codes[0]));
+}
+
+function renderWx(c){
+  var box=$("p-wx"),chip=$("wx-chip");box.textContent="";
+  var place=c&&(c.cap||c.en);
+  function fallback(){
+    chip.className="chip";chip.textContent="링크로 보기";
+    box.appendChild(el("div","note","날씨 서버에 연결하지 못했어요. 아래에서 지금 날씨를 바로 열 수 있어요."));
+    var l=el("div","links");l.style.marginTop="8px";
+    l.appendChild(link(place+" 지금 날씨","https://www.google.com/search?q="+encodeURIComponent(place+" 날씨")));box.appendChild(l);
+  }
+  function show(w){
+    chip.className="chip live";chip.textContent="실시간";
+    box.appendChild(el("div","big",nf(w.temperature_2m,1)+"°C"));
+    box.appendChild(el("div","sub",(WMO[w.weather_code]||"날씨 코드 "+w.weather_code)+" · "+place));
+    var r=el("div","rows");r.style.marginTop="8px";
+    r.appendChild(row("체감",nf(w.apparent_temperature,1)+"°C"));
+    r.appendChild(row("습도",nf(w.relative_humidity_2m,0)+"%"));
+    r.appendChild(row("바람",nf(w.wind_speed_10m,1)+" km/h"));box.appendChild(r);
+  }
+  if(!c||c.lat==null){fallback();return}
+  if(wxBlocked){fallback();return}
+  var hit=wxCache[c.a2];if(hit&&Date.now()-hit.t<600000){show(hit.w);return}
+  chip.className="chip";chip.textContent="불러오는 중";
+  getJSON("https://api.open-meteo.com/v1/forecast?latitude="+c.lat+"&longitude="+c.lng+"&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m")
+   .then(function(j){if(!j.current)throw 0;wxCache[c.a2]={t:Date.now(),w:j.current};if(current&&current.c===c){box.textContent="";show(j.current)}})
+   .catch(function(){wxBlocked=true;if(current&&current.c===c){box.textContent="";fallback()}});
+}
+
+var REG={Asia:"아시아",Europe:"유럽",Africa:"아프리카",Americas:"아메리카",Oceania:"오세아니아",Antarctic:"남극"},langNames=null;
+try{langNames=new Intl.DisplayNames(["ko"],{type:"language"})}catch(_){}
+function tzOff(tz){
+  try{var d=new Date(),o={};
+    new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(d).forEach(function(x){o[x.type]=+x.value});
+    return Math.round((Date.UTC(o.year,o.month-1,o.day,o.hour===24?0:o.hour,o.minute,o.second)-d.getTime())/60000);
+  }catch(_){return null}
+}
+function hm(min){var h=Math.floor(min/60),m=min%60;return (h?h+"시간":"")+(m?(h?" ":"")+m+"분":"")}
+function renderInfo(c,km){
+  var box=$("p-info");box.textContent="";
+  if(!c){box.appendChild(el("div","note","이 지역의 상세 정보가 없어요."));return}
+  if(c.rg)box.appendChild(row("지역",REG[c.rg]||c.rg));
+  if(c.ar>0)box.appendChild(row("면적",nf(c.ar,0)+" km²"));
+  if(c.lg&&c.lg.length)box.appendChild(row("언어",c.lg.map(function(l){var n=null;try{n=langNames&&langNames.of(l[0])}catch(_){}return (n&&n!==l[0])?n:l[1]}).join(", ")));
+  if(c.tz&&c.a2!=="KR"){var a=tzOff(c.tz),b=tzOff("Asia/Seoul");
+    if(a!=null&&b!=null){var d=a-b;box.appendChild(row("한국과 시차",d===0?"같은 시간":"한국보다 "+hm(Math.abs(d))+(d>0?" 빠름":" 느림")))}}
+  if(km!=null)box.appendChild(row("서울에서 "+(c.cap||"수도")+"까지","약 "+nf(Math.round(km/10)*10,0)+" km"));
+}
+
+var NEWS=null;
+function ago(iso){var m=Math.round((Date.now()-new Date(iso).getTime())/60000);if(!(m>=0))return "";if(m<60)return Math.max(1,m)+"분 전";var h=Math.round(m/60);if(h<48)return h+"시간 전";return Math.round(h/24)+"일 전"}
+getJSON("data/news.json?v="+Math.floor(Date.now()/600000)).then(function(j){
+  if(!j||!j.items)return;NEWS=j;
+  if(current)renderNews(current.c,$("p-name").textContent,current.c?current.c.en:"");
+  if(j.clouds&&j.clouds.file){
+    loader.load("data/"+j.clouds.file+"?v="+encodeURIComponent(j.clouds.at||""),function(tx){
+      tx.wrapS=THREE.RepeatWrapping;tx.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+      cloudMat.uniforms.cloudMap.value=tx;cloudMat.uniforms.useMap.value=1;
+      var cb=$("cloud");cb.textContent="위성 구름";cb.title="실제 위성 구름 · "+ago(j.clouds.at)+" 업데이트";
+    });
+  }
+}).catch(function(){});
+function renderNews(c,name,en){
+  var box=$("p-news"),chip=$("news-chip");box.textContent="";
+  var list=NEWS&&c&&NEWS.items[c.a2];
+  if(list&&list.length){
+    chip.className="chip live";chip.textContent=ago(NEWS.updatedAt)+" 업데이트";
+    box.className="news";
+    list.forEach(function(n){var a=el("a");a.href=n.u;a.target="_blank";a.rel="noopener";
+      a.appendChild(el("strong",null,n.t));a.appendChild(el("small",null,(n.s?n.s+" · ":"")+ago(n.d)));box.appendChild(a)});
+    var more=el("div","links more");more.appendChild(link("더 많은 "+name+" 기사","https://news.google.com/search?q="+encodeURIComponent(name)+"&hl=ko&gl=KR&ceid=KR%3Ako"));box.appendChild(more);
+  }else{
+    chip.className="chip";chip.textContent="링크로 보기";box.className="links";
+    box.appendChild(link(name+" 최신 기사","https://www.google.com/search?q="+encodeURIComponent(name+" 뉴스")+"&tbm=nws&hl=ko"));
+    box.appendChild(link(en+" news (영어)","https://www.google.com/search?q="+encodeURIComponent(en+" news")+"&tbm=nws&hl=en"));
+  }
+  var m=$("p-music");m.textContent="";
+  m.appendChild(link(name+" 국가(國歌) 듣기","https://www.youtube.com/results?search_query="+encodeURIComponent(en+" national anthem")));
+  m.appendChild(link(name+" 대표곡 듣기","https://www.youtube.com/results?search_query="+encodeURIComponent(name+" 대표 노래")));
+}
+
+function tickPanel(){
+  if(!current)return;var c=current.c,now=new Date();
+  if(c&&c.tz){
+    try{
+      $("p-time").textContent=new Intl.DateTimeFormat("ko-KR",{timeZone:c.tz,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);
+      $("p-date").textContent=new Intl.DateTimeFormat("ko-KR",{timeZone:c.tz,year:"numeric",month:"long",day:"numeric",weekday:"long"}).format(now)+" · "+(c.cap||"")+" 기준";
+    }catch(_){$("p-time").textContent="--:--:--";$("p-date").textContent=""}
+  }else{$("p-time").textContent="--:--:--";$("p-date").textContent="표준 시간대 정보가 없어요."}
+  var sky=$("p-sky");
+  if(c&&c.lat!=null){
+    var rs=sunLL(Date.now()),alt=Math.asin(Math.max(-1,Math.min(1,ll2v(c.lat,c.lng,1).dot(ll2v(rs.lat,rs.lon,1)))))*R2D;
+    sky.style.display="";sky.className="sky"+(alt>0?"":alt>-6?" dusk":" night");
+    sky.lastChild.textContent=(alt>0?"지금 낮":alt>-6?"해 뜨거나 지는 중":"지금 밤")+" · 태양 고도 "+alt.toFixed(1)+"°";
+  }else sky.style.display="none";
+}
+
+function select(f,fly){
+  var c=COUNTRIES[f.id]||null,name=c?c.ko:f.properties.name,en=c?c.en:f.properties.name;
+  current={f:f,c:c};
+  $("p-flag").textContent=c?c.flag:"";$("p-name").textContent=name;
+  $("p-sub").textContent=en+(c&&c.cap?" · 수도 "+c.cap:"");
+  var lines=[];f.polys.forEach(function(p){p.forEach(function(r){lines.push(r)})});
+  selLines.geometry.dispose();selLines.geometry=selGlow.geometry=lineGeom(lines,1.003);
+  renderInfo(c,arcTo(c));renderFx(c);renderWx(c);renderNews(c,name,en);tickPanel();
+  panel.classList.add("open");panel.querySelector(".p-body").scrollTop=0;resize();
+  if(fly){
+    var b=f.bbox,lat=c&&c.lat!=null?c.lat:(b[1]+b[3])/2,lon=c&&c.lng!=null?c.lng:(b[0]+b[2])/2;
+    if(reduceMotion){cam.lon=lon;cam.lat=lat;clampCam()}else target={lon:lon,lat:Math.max(-70,Math.min(70,lat))};
+  }
+}
+$("close").addEventListener("click",function(){panel.classList.remove("open");current=null;selLines.geometry=selGlow.geometry=new THREE.BufferGeometry();arcTo(null);lastTouch=performance.now();resize()});
+
+/* ---------- 시간 이동 · 구름 · 검색 ---------- */
+var shiftMin=0,when=$("when"),nowBtn=$("now");
+function setShift(v){shiftMin=v;when.value=v;nowBtn.disabled=v===0;lastSec=-1}
+when.addEventListener("input",function(){setShift(+when.value)});
+nowBtn.addEventListener("click",function(){setShift(0)});
+$("cloud").addEventListener("click",function(){clouds.visible=!clouds.visible;this.setAttribute("aria-pressed",clouds.visible?"true":"false")});
+
+var q=$("q"),qList=$("q-list"),index=[];
+features.forEach(function(f){var c=COUNTRIES[f.id];index.push({f:f,ko:c?c.ko:f.properties.name,en:(c?c.en:f.properties.name),flag:c?c.flag:"",key:((c?c.ko+" "+c.en+" "+c.a2+" "+(c.cap||""):f.properties.name)).toLowerCase()})});
+function showResults(){
+  var v=q.value.trim().toLowerCase();qList.textContent="";
+  if(!v){qList.classList.remove("on");return}
+  var hits=index.filter(function(x){return x.key.indexOf(v)>=0}).sort(function(a,b){return (a.ko.toLowerCase().indexOf(v)===0||a.en.toLowerCase().indexOf(v)===0?0:1)-(b.ko.toLowerCase().indexOf(v)===0||b.en.toLowerCase().indexOf(v)===0?0:1)}).slice(0,6);
+  if(!hits.length){var n=el("button",null,"일치하는 나라가 없어요");n.type="button";n.disabled=true;qList.appendChild(n)}
+  hits.forEach(function(x){var b=el("button");b.type="button";b.appendChild(document.createTextNode((x.flag?x.flag+" ":"")+x.ko));b.appendChild(el("small",null,x.en));
+    b.addEventListener("click",function(){select(x.f,true);q.value="";qList.classList.remove("on");q.blur()});qList.appendChild(b)});
+  qList.classList.add("on");
+}
+q.addEventListener("input",showResults);
+q.addEventListener("keydown",function(e){if(e.key==="Enter"){var b=qList.querySelector("button:not(:disabled)");if(b)b.click()}else if(e.key==="Escape"){q.value="";showResults();q.blur()}});
+stage.addEventListener("pointerdown",function(){qList.classList.remove("on");q.blur()});
+
+/* ---------- 루프 ---------- */
+var clockEl=$("clock"),lastSec=-1,lastT=performance.now();
+function frame(t){
+  requestAnimationFrame(frame);
+  var dt=Math.min(0.05,(t-lastT)/1000);lastT=t;
+  var now=Date.now(),s=sunLL(now+shiftMin*60000);sunDir.copy(ll2v(s.lat,s.lon,1));
+  if(cloudMat.uniforms.useMap.value<0.5)cloudMat.uniforms.t.value+=dt*0.004;if(window.__sun)window.__sun.position.copy(sunDir).multiplyScalar(110);
+  if(pcount()===0){
+    if(target){
+      var dl=((target.lon-cam.lon)%360+540)%360-180,k=1-Math.exp(-dt*4.5);
+      cam.lon+=dl*k;cam.lat+=(target.lat-cam.lat)*k;
+      if(Math.abs(dl)<0.05&&Math.abs(target.lat-cam.lat)<0.05)target=null;
+    }else{
+      cam.lon+=cam.vLon;cam.lat+=cam.vLat;var f=Math.exp(-dt*3.2);cam.vLon*=f;cam.vLat*=f;
+      if(!current&&!reduceMotion&&t-lastTouch>2500)cam.lon+=dt*2.2;
+    }
+    clampCam();
+  }
+  camera.position.copy(ll2v(cam.lat,cam.lon,cam.dist));camera.up.set(0,1,0);camera.lookAt(0,0,0);
+  renderer.render(scene,camera);
+  var sec=Math.floor(now/1000);
+  if(sec!==lastSec){lastSec=sec;var d=new Date(now);
+    clockEl.textContent=(shiftMin?"시간 이동 "+(shiftMin>0?"+":"−")+hm(Math.abs(shiftMin))+" → UTC "+new Date(now+shiftMin*60000).toISOString().slice(11,16):"UTC "+d.toISOString().slice(11,19))+" · 태양 직하점 "+Math.abs(s.lat).toFixed(1)+"°"+(s.lat>=0?"N":"S")+" "+Math.abs(s.lon).toFixed(1)+"°"+(s.lon>=0?"E":"W");
+    tickPanel();}
+}
+resize();
+var kr=null;for(var i=0;i<features.length;i++)if(features[i].id==="410"){kr=features[i];break}
+if(kr){select(kr,false);cam.lon=127;cam.lat=30}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
