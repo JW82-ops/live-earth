@@ -10,6 +10,8 @@
 | 환율 | open.er-api.com (브라우저에서 직접 호출) | 페이지를 열 때마다 |
 | 날씨 | Open-Meteo (브라우저에서 직접 호출) | 나라를 누를 때마다, 10분 캐시 |
 | 최신 기사 | Google 뉴스 RSS → `data/news.json` | GitHub Actions가 매시간 받아서 바로 배포 |
+| 지진 | USGS (브라우저에서 직접, 실패 시 `data/quakes.json`) | 5분마다 |
+| 국제우주정거장 | Celestrak 궤도 요소 → `data/iss.json`, 위치는 브라우저에서 satellite.js로 계산 | 궤도는 매시간, 위치는 매 순간 |
 | 위성 구름 | clouds.matteason.co.uk → `data/clouds.png` | GitHub Actions가 매시간 받아서 바로 배포 |
 
 환율·날씨 서버에 닿지 못하면 `snapshot.js`의 환율과 날씨 검색 링크로 대신한다.
@@ -29,5 +31,7 @@
 - `countries.js` 나라별 이름·수도·좌표·통화·시간대 (world-countries, city-timezones 기반)
 - `world.js` 국경 데이터 (world-atlas 50m)
 - `earth-*.jpg/png` 지구 텍스처 (three-globe 예제 이미지)
-- `scripts/update-data.mjs` 기사·구름 수집 스크립트
+- `scripts/update-data.mjs` 기사·구름·지진·ISS 궤도 수집 스크립트
+- `manifest.webmanifest`, `sw.js`, `icon-*.png`, `apple-touch-icon.png` 홈 화면 앱 설정
+- `og.jpg` 링크 공유 미리보기 이미지
 - `.github/workflows/update-data.yml` 매시간 실행 설정

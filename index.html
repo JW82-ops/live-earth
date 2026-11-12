@@ -2,8 +2,26 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>라이브 어스</title>
+<meta name="description" content="실시간으로 낮과 밤이 바뀌는 3D 지구. 나라별 환율·날씨·뉴스, 지진, 국제우주정거장 위치까지.">
+<meta name="theme-color" content="#03060b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="라이브 어스">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="라이브 어스">
+<meta property="og:title" content="라이브 어스 · 실시간 3D 지구">
+<meta property="og:description" content="지금 이 순간의 낮과 밤, 나라별 환율·날씨·뉴스, 지진과 우주정거장까지 손가락으로 돌려보세요.">
+<meta property="og:url" content="https://jw82-ops.github.io/live-earth/">
+<meta property="og:image" content="https://jw82-ops.github.io/live-earth/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -68,6 +86,7 @@ section:last-child{border-bottom:0}
 .chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sun)}
 .chip.live{color:var(--live);border-color:rgba(94,224,138,.35)}
 .chip.live::before{background:var(--live)}
+.big.txt{font-family:var(--font-body);font-weight:600}
 .big{font-family:var(--font-num);font-size:28px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.15}
 .sub{font-size:13px;color:var(--muted)}
 .rows{display:flex;flex-direction:column;gap:6px}
@@ -91,9 +110,24 @@ section:last-child{border-bottom:0}
 .sky.night i{background:#6f86c9;box-shadow:0 0 10px #6f86c9}
 .sky.dusk i{background:#e0785a;box-shadow:0 0 10px #e0785a}
 
+[hidden]{display:none!important}
+#cty,#alt{display:flex;flex-direction:column}
+.layers{display:flex;gap:6px;flex-wrap:wrap}
+.layers .mini{background:rgba(9,14,23,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:6px 10px;display:inline-flex;align-items:center;gap:6px}
+.layers .mini i{width:7px;height:7px;border-radius:50%;background:currentColor}
+#cloud i{background:#cfe0ff}#quake-btn i{background:#ff7a45}#iss-btn i{background:#7df9ff}
+.layers .mini[aria-pressed="false"] i{background:transparent;box-shadow:inset 0 0 0 1px currentColor}
+.qdot{display:inline-block;width:30px;height:30px;border-radius:50%;margin:2px}
+.qdot.iss{background:radial-gradient(circle,#fff 0 18%,#7df9ff 30%,rgba(125,249,255,0) 70%)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:50%}
+.hud{padding-top:max(16px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left))}
+#panel{bottom:max(16px,env(safe-area-inset-bottom))}
 @media (max-width:720px){
-  #panel{top:auto;left:8px;right:8px;bottom:8px;width:auto;height:54%;transform:translateY(calc(100% + 16px))}
+  #panel{top:auto;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));width:auto;height:54%;transform:translateY(calc(100% + 16px))}
   .hint{display:none}
+  body.panel-open .timebar,body.panel-open .layers{display:none}
   .p-title h2{font-size:20px}
 }
 @media (prefers-reduced-motion:reduce){#panel{transition:none}}
@@ -115,11 +149,15 @@ section:last-child{border-bottom:0}
       <label for="when" id="when-label">시간 이동</label>
       <input id="when" type="range" min="-720" max="720" step="10" value="0" aria-label="낮과 밤을 앞뒤 12시간까지 이동">
       <button class="mini" id="now" type="button" disabled>지금</button>
-      <button class="mini" id="cloud" type="button" aria-pressed="true" title="연출용 구름 (실제 구름 아님)">구름</button>
+    </div>
+    <div class="layers" role="group" aria-label="지구 위에 표시할 것">
+      <button class="mini" id="cloud" type="button" aria-pressed="true" title="연출용 구름 (실제 구름 아님)"><i></i><span>구름</span></button>
+      <button class="mini" id="quake-btn" type="button" aria-pressed="true" title="최근 24시간 규모 2.5 이상 지진"><i></i><span>지진</span></button>
+      <button class="mini" id="iss-btn" type="button" aria-pressed="true" title="국제우주정거장 실시간 위치"><i></i><span>ISS</span></button>
     </div>
   </div>
 </div>
-<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 나라를 누르면 정보</div>
+<div class="hint">드래그로 회전 · 핀치/휠로 확대 · 나라·지진·ISS를 누르면 정보</div>
 
 <aside id="panel" aria-live="polite">
   <div class="p-head">
@@ -128,6 +166,8 @@ section:last-child{border-bottom:0}
     <button id="close" type="button" aria-label="패널 닫기">×</button>
   </div>
   <div class="p-body">
+   <div id="alt" hidden></div>
+   <div id="cty">
     <section>
       <div class="s-head"><h3>현지 시각</h3><span class="chip live">실시간</span></div>
       <div class="big" id="p-time">--:--:--</div>
@@ -154,11 +194,13 @@ section:last-child{border-bottom:0}
       <div class="s-head"><h3>음악</h3><span class="chip">YouTube에서 열기</span></div>
       <div class="links" id="p-music"></div>
     </section>
+   </div>
   </div>
 </aside>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
 <script src="countries.js"></script>
 <script src="world.js"></script>
 <script src="snapshot.js"></script>
@@ -340,6 +382,7 @@ function resize(){
   renderer.setSize(w,h,false);camera.aspect=w/h;
   var narrow=w<=720, ph=(narrow&&panel.classList.contains("open"))?panel.offsetHeight+8:0;
   var pw=(!narrow&&panel.classList.contains("open"))?panel.offsetWidth+16:0;
+  document.body.classList.toggle("panel-open",panel.classList.contains("open"));
   if(ph||pw)camera.setViewOffset(w,h,pw/2,ph/2,w,h);else camera.clearViewOffset();
   camera.updateProjectionMatrix();
   var freeW=w-pw,freeH=h-ph, vf=camera.fov*D2R/2, tanV=Math.tan(vf);
@@ -381,8 +424,25 @@ stage.addEventListener("pointerup",up);stage.addEventListener("pointercancel",up
 stage.addEventListener("wheel",function(e){e.preventDefault();cam.dist=1+(cam.dist-1)*Math.exp(e.deltaY*0.0012);clampCam();lastTouch=performance.now()},{passive:false});
 
 var ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),sphere=new THREE.Sphere(new THREE.Vector3(),1),hit=new THREE.Vector3();
+var tmpV=new THREE.Vector3(),tmpD=new THREE.Vector3();
+function hidden(v){ // 카메라에서 v까지 가는 선이 지구에 먼저 부딪히면 가려진 것
+  var d=tmpD.copy(v).sub(camera.position),L=d.length();d.divideScalar(L);
+  var b=camera.position.dot(d),disc=b*b-(camera.position.lengthSq()-1);
+  if(disc<0)return false;var t=-b-Math.sqrt(disc);return t>0&&t<L-0.002;
+}
+function screenDist(v,x,y,r){
+  if(hidden(v))return 1e9;
+  tmpV.copy(v).project(camera);
+  return Math.hypot((tmpV.x+1)/2*r.width+r.left-x,(1-tmpV.y)/2*r.height+r.top-y);
+}
 function pick(x,y){
   var r=renderer.domElement.getBoundingClientRect();
+  if(issGroup.visible&&issPos&&screenDist(issSprite.position,x,y,r)<30){openISS();return}
+  if(quakePts.visible&&QUAKES.length){
+    var best=null,bd=22;
+    QUAKES.forEach(function(q){var d=screenDist(q.v,x,y,r);if(d<bd){bd=d;best=q}});
+    if(best){openQuake(best);return}
+  }
   ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
   if(!ray.ray.intersectSphere(sphere,hit))return;
   var lat=Math.asin(Math.max(-1,Math.min(1,hit.y)))*R2D,lon=Math.atan2(-hit.z,hit.x)*R2D;
@@ -525,7 +585,7 @@ function tickPanel(){
 
 function select(f,fly){
   var c=COUNTRIES[f.id]||null,name=c?c.ko:f.properties.name,en=c?c.en:f.properties.name;
-  current={f:f,c:c};
+  current={f:f,c:c};alt=null;$("alt").hidden=true;$("cty").hidden=false;
   $("p-flag").textContent=c?c.flag:"";$("p-name").textContent=name;
   $("p-sub").textContent=en+(c&&c.cap?" · 수도 "+c.cap:"");
   var lines=[];f.polys.forEach(function(p){p.forEach(function(r){lines.push(r)})});
@@ -537,7 +597,7 @@ function select(f,fly){
     if(reduceMotion){cam.lon=lon;cam.lat=lat;clampCam()}else target={lon:lon,lat:Math.max(-70,Math.min(70,lat))};
   }
 }
-$("close").addEventListener("click",function(){panel.classList.remove("open");current=null;selLines.geometry=selGlow.geometry=new THREE.BufferGeometry();arcTo(null);lastTouch=performance.now();resize()});
+$("close").addEventListener("click",function(){panel.classList.remove("open");current=null;alt=null;selLines.geometry=selGlow.geometry=new THREE.BufferGeometry();arcTo(null);lastTouch=performance.now();resize()});
 
 /* ---------- 시간 이동 · 구름 · 검색 ---------- */
 var shiftMin=0,when=$("when"),nowBtn=$("now");
@@ -561,6 +621,160 @@ q.addEventListener("input",showResults);
 q.addEventListener("keydown",function(e){if(e.key==="Enter"){var b=qList.querySelector("button:not(:disabled)");if(b)b.click()}else if(e.key==="Escape"){q.value="";showResults();q.blur()}});
 stage.addEventListener("pointerdown",function(){qList.classList.remove("on");q.blur()});
 
+/* ---------- 지진 ---------- */
+var QUAKES=[],quakeAt=null,alt=null;
+var quakeMat=new THREE.ShaderMaterial({
+  uniforms:{time:{value:0},pr:{value:renderer.getPixelRatio()}},transparent:true,depthWrite:false,
+  vertexShader:"attribute float mag;attribute float age;uniform float pr;uniform float time;varying float vMag;varying float vAge;varying float vPulse;void main(){vMag=mag;vAge=age;vPulse=fract(time*0.45+mag*0.37);vec4 mv=modelViewMatrix*vec4(position,1.0);gl_PointSize=pr*(6.0+pow(max(mag-2.0,0.0),1.6)*4.0)*(age<6.0?2.6:1.0);gl_Position=projectionMatrix*mv;}",
+  fragmentShader:"varying float vMag;varying float vAge;varying float vPulse;void main(){vec2 c=gl_PointCoord-0.5;float d=length(c)*2.0;vec3 col=vMag>=6.0?vec3(1.0,0.22,0.25):vMag>=4.5?vec3(1.0,0.48,0.27):vec3(1.0,0.82,0.35);float big=vAge<6.0?2.6:1.0;float core=1.0-smoothstep(0.30/big,0.42/big,d);float a=core;if(vAge<6.0){float ring=vPulse;float w=abs(d-ring);a=max(a,(1.0-smoothstep(0.0,0.06,w))*(1.0-ring)*0.9);}float halo=(1.0-smoothstep(0.0,0.75/big,d))*0.35;a=max(a,halo*core+halo*0.5);if(a<0.01)discard;gl_FragColor=vec4(col,a);}"
+});
+var quakePts=new THREE.Points(new THREE.BufferGeometry(),quakeMat);quakePts.renderOrder=5;scene.add(quakePts);
+function setQuakes(list,live){
+  var now=Date.now();
+  QUAKES=list.filter(function(q){return q.mag!=null&&now-q.time<36*3600e3}).sort(function(a,b){return a.mag-b.mag});
+  var pos=new Float32Array(QUAKES.length*3),mag=new Float32Array(QUAKES.length),age=new Float32Array(QUAKES.length);
+  QUAKES.forEach(function(q,i){q.v=ll2v(q.lat,q.lon,1.004);pos[i*3]=q.v.x;pos[i*3+1]=q.v.y;pos[i*3+2]=q.v.z;mag[i]=q.mag;age[i]=(now-q.time)/3600e3});
+  var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("mag",new THREE.BufferAttribute(mag,1));g.setAttribute("age",new THREE.BufferAttribute(age,1));
+  quakePts.geometry.dispose();quakePts.geometry=g;quakeAt=live?new Date().toISOString():quakeAt;
+  var n24=QUAKES.filter(function(q){return now-q.time<24*3600e3}).length;
+  $("quake-btn").lastChild.textContent="지진 "+n24;
+}
+function loadQuakes(){
+  getJSON("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson").then(function(j){
+    setQuakes(j.features.map(function(f){var p=f.properties,c=f.geometry.coordinates;return {lon:c[0],lat:c[1],depth:c[2],mag:p.mag,time:p.time,place:p.place,url:p.url,id:f.id}}),true);
+  }).catch(function(){
+    getJSON("data/quakes.json?v="+Math.floor(Date.now()/600000)).then(function(j){quakeAt=j.at;setQuakes(j.items,false)}).catch(function(){});
+  });
+}
+loadQuakes();setInterval(loadQuakes,5*60000);
+$("quake-btn").addEventListener("click",function(){quakePts.visible=!quakePts.visible;this.setAttribute("aria-pressed",quakePts.visible?"true":"false")});
+
+function openAlt(title,sub,dotClass,dotColor){
+  current=null;$("cty").hidden=true;var a=$("alt");a.hidden=false;a.textContent="";
+  var f=$("p-flag");f.textContent="";var d=el("span","qdot"+(dotClass?" "+dotClass:""));if(dotColor)d.style.background="radial-gradient(circle,"+dotColor+" 0 34%,transparent 36%),radial-gradient(circle,"+dotColor+"55 0 70%,transparent 72%)";f.appendChild(d);
+  $("p-name").textContent=title;$("p-sub").textContent=sub;
+  selLines.geometry=selGlow.geometry=new THREE.BufferGeometry();arcTo(null);
+  panel.classList.add("open");panel.querySelector(".p-body").scrollTop=0;resize();
+  return a;
+}
+function sec(parent,title,chip,chipLive){
+  var s=el("section"),h=el("div","s-head");h.appendChild(el("h3",null,title));
+  if(chip){var c=el("span","chip"+(chipLive?" live":""),chip);h.appendChild(c)}
+  s.appendChild(h);parent.appendChild(s);return s;
+}
+function kst(ms,withDate){return new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:withDate?"long":undefined,day:withDate?"numeric":undefined,weekday:withDate?"short":undefined,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(ms))}
+function landName(lat,lon){var f=findCountry(lat,lon);if(!f)return null;var c=COUNTRIES[f.id];return c?c.ko:f.properties.name}
+function openQuake(q){
+  var col=q.mag>=6?"#ff3840":q.mag>=4.5?"#ff7a45":"#ffd159";
+  alt={type:"quake",q:q};
+  var a=openAlt("규모 "+q.mag.toFixed(1)+" 지진",q.place||"위치 정보 없음",null,col);
+  var s1=sec(a,"발생 시각",ago(new Date(q.time).toISOString()),Date.now()-q.time<3*3600e3);
+  s1.appendChild(el("div","big",kst(q.time)));s1.appendChild(el("div","sub","한국 시간 "+kst(q.time,true)));
+  var s2=sec(a,"상세"),r=el("div","rows");s2.appendChild(r);
+  r.appendChild(row("규모",q.mag.toFixed(1)+(q.mag>=6?" · 강한 지진":q.mag>=4.5?" · 중간 지진":" · 약한 지진")));
+  r.appendChild(row("깊이",nf(q.depth,1)+" km"+(q.depth<70?" · 얕음":q.depth<300?" · 중간":" · 깊음")));
+  r.appendChild(row("위치",Math.abs(q.lat).toFixed(2)+"°"+(q.lat>=0?"N":"S")+" "+Math.abs(q.lon).toFixed(2)+"°"+(q.lon>=0?"E":"W")));
+  var ln=landName(q.lat,q.lon);r.appendChild(row("지역",ln?ln+" 육지":"바다 또는 해안"));
+  var km=ll2v(SEOUL.lat,SEOUL.lng,1).angleTo(ll2v(q.lat,q.lon,1))*6371;r.appendChild(row("서울에서","약 "+nf(Math.round(km/10)*10,0)+" km"));
+  var s3=sec(a,"최근 지진 범례",quakeAt?"USGS · "+ago(quakeAt)+" 업데이트":"USGS",!!quakeAt&&Date.now()-new Date(quakeAt)<15*60000);
+  var lg=el("div","legend");[["#ffd159","규모 2.5~4.4"],["#ff7a45","4.5~5.9"],["#ff3840","6.0 이상"]].forEach(function(x){var sp=el("span");var i=el("i");i.style.background=x[0];sp.appendChild(i);sp.appendChild(document.createTextNode(x[1]));lg.appendChild(sp)});
+  s3.appendChild(lg);s3.appendChild(el("div","note","6시간 안에 일어난 지진은 크게, 퍼지는 고리로 표시돼요."));
+  if(q.url){var l=el("div","links");l.appendChild(link("USGS 상세 정보",q.url));s3.appendChild(l)}
+  if(!reduceMotion)target={lon:q.lon,lat:Math.max(-70,Math.min(70,q.lat))};
+}
+
+/* ---------- 국제우주정거장 ---------- */
+var issGroup=new THREE.Group();scene.add(issGroup);
+var issSprite=(function(){
+  var cv=document.createElement("canvas");cv.width=cv.height=128;var g=cv.getContext("2d");
+  var gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(0.14,"rgba(200,255,255,1)");gr.addColorStop(0.3,"rgba(125,249,255,.55)");gr.addColorStop(1,"rgba(125,249,255,0)");
+  g.fillStyle=gr;g.fillRect(0,0,128,128);
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+  sp.renderOrder=6;issGroup.add(sp);return sp;
+})();
+var issOrbit=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.9,depthWrite:false,blending:THREE.AdditiveBlending}));
+issOrbit.renderOrder=5;issGroup.add(issOrbit);
+var satrec=null,issPos=null,issLive=null,issTleAt=null,issOrbitAt=0,SATJS=window.satellite||null;
+function issAt(ms){ // {lat,lon,alt(km),vel(km/h),v:Vector3}
+  if(!satrec||!SATJS)return null;
+  var d=new Date(ms),pv=SATJS.propagate(satrec,d);if(!pv||!pv.position||typeof pv.position==="boolean")return null;
+  var gm=SATJS.gstime(d),gd=SATJS.eciToGeodetic(pv.position,gm),v=pv.velocity;
+  var lat=gd.latitude*R2D,lon=gd.longitude*R2D,h=gd.height;
+  return {lat:lat,lon:((lon+540)%360)-180,alt:h,vel:Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z)*3600,v:ll2v(lat,lon,1+h/6371)};
+}
+function buildOrbit(ms){
+  var n=120,pos=new Float32Array((n+1)*3),col=new Float32Array((n+1)*3);
+  for(var i=0;i<=n;i++){var t=ms+(i/n-0.5)*92*60000,p=issAt(t);if(!p)return;
+    pos[i*3]=p.v.x;pos[i*3+1]=p.v.y;pos[i*3+2]=p.v.z;
+    var u=i/n,k=u<0.5?0.15+0.85*Math.pow(u*2,2):1-0.75*(u-0.5)*2;col[i*3]=0.49*k;col[i*3+1]=0.98*k;col[i*3+2]=1.0*k}
+  var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("color",new THREE.BufferAttribute(col,3));
+  issOrbit.geometry.dispose();issOrbit.geometry=g;issOrbitAt=ms;
+}
+function useTle(j){
+  if(!SATJS||!j||!j.l1)return false;
+  try{satrec=SATJS.twoline2satrec(j.l1,j.l2);issTleAt=j.at||null;issPos=issAt(Date.now());return !!issPos}catch(_){satrec=null;return false}
+}
+function pollIss(){ // TLE가 없을 때: 위치 API를 직접 조회
+  getJSON("https://api.wheretheiss.at/v1/satellites/25544").then(function(j){
+    issLive={lat:j.latitude,lon:j.longitude,alt:j.altitude,vel:j.velocity,v:ll2v(j.latitude,j.longitude,1+j.altitude/6371),t:Date.now()};issPos=issLive;
+  }).catch(function(){});
+}
+getJSON("data/iss.json?v="+Math.floor(Date.now()/3600000)).then(function(j){if(!useTle(j))throw 0}).catch(function(){pollIss();setInterval(function(){if(!satrec)pollIss()},5000)});
+$("iss-btn").addEventListener("click",function(){issGroup.visible=!issGroup.visible;this.setAttribute("aria-pressed",issGroup.visible?"true":"false")});
+
+function nextSeoulPass(ms){
+  if(!satrec||!SATJS)return null;
+  var obs={latitude:SEOUL.lat*D2R,longitude:SEOUL.lng*D2R,height:0.03},pass=null;
+  for(var t=ms;t<ms+48*3600e3;t+=20000){
+    var d=new Date(t),pv=SATJS.propagate(satrec,d);if(!pv||!pv.position||typeof pv.position==="boolean")continue;
+    var gm=SATJS.gstime(d),la=SATJS.ecfToLookAngles(obs,SATJS.eciToEcf(pv.position,gm)),el_=la.elevation*R2D;
+    if(el_>=10){
+      if(!pass)pass={start:t,max:el_,maxT:t};
+      if(el_>pass.max){pass.max=el_;pass.maxT=t}
+    }else if(pass){pass.end=t;break}
+  }
+  if(!pass)return null;
+  var sp=issAt(pass.maxT),sun=sunLL(pass.maxT),sd=ll2v(sun.lat,sun.lon,1);
+  var sunAltSeoul=Math.asin(ll2v(SEOUL.lat,SEOUL.lng,1).dot(sd))*R2D;
+  pass.visible=sunAltSeoul<-6&&sp&&issSunlit(sp.v,sd);
+  return pass;
+}
+function issSunlit(v,sd){var d=v.dot(sd);if(d>0)return true;return v.clone().addScaledVector(sd,-d).length()>1}
+function openISS(){
+  alt={type:"iss"};
+  var a=openAlt("국제우주정거장 (ISS)","지금 이 순간 지구를 돌고 있는 위치","iss");
+  var s1=sec(a,"현재 위치",satrec?"실시간 계산":"실시간",true);
+  s1.appendChild(el("div","big txt")).id="iss-over";s1.appendChild(el("div","sub")).id="iss-ll";
+  var r=el("div","rows");r.id="iss-rows";r.style.marginTop="6px";s1.appendChild(r);
+  var s2=sec(a,"서울에서 다음에 보이는 때");
+  var p=nextSeoulPass(Date.now());
+  if(p){
+    s2.appendChild(el("div","big",kst(p.start)));
+    s2.appendChild(el("div","sub",kst(p.start,true)+" 시작 · 약 "+Math.max(1,Math.round(((p.end||p.start)-p.start)/60000))+"분 동안"));
+    var r2=el("div","rows");r2.style.marginTop="6px";r2.appendChild(row("최대 높이","지평선 위 "+Math.round(p.max)+"°"));
+    r2.appendChild(row("맨눈 관측",p.visible?"가능 (어두운 하늘 + 햇빛 받는 ISS)":"어려움 (낮이거나 ISS가 그림자 속)"));s2.appendChild(r2);
+  }else s2.appendChild(el("div","note",satrec?"앞으로 48시간 안에는 서울 하늘(고도 10° 이상)을 지나지 않아요.":"궤도 데이터를 받지 못해 계산할 수 없어요."));
+  var s3=sec(a,"더 보기"),l=el("div","links");
+  l.appendChild(link("ISS 실시간 영상","https://www.youtube.com/results?search_query="+encodeURIComponent("ISS live stream earth")));
+  l.appendChild(link("NASA 관측 안내","https://spotthestation.nasa.gov/"));s3.appendChild(l);
+  if(issTleAt)s3.appendChild(el("div","note","궤도 요소(TLE) "+ago(issTleAt)+" 업데이트 · 위치는 매 순간 계산"));
+  tickISS();
+  if(issPos&&!reduceMotion)target={lon:issPos.lon,lat:Math.max(-70,Math.min(70,issPos.lat))};
+}
+function tickISS(){
+  if(!alt||alt.type!=="iss"||!issPos)return;
+  var ln=landName(issPos.lat,issPos.lon);
+  $("iss-over").textContent=ln?ln+" 상공":"바다 위";
+  $("iss-ll").textContent=Math.abs(issPos.lat).toFixed(2)+"°"+(issPos.lat>=0?"N":"S")+" "+Math.abs(issPos.lon).toFixed(2)+"°"+(issPos.lon>=0?"E":"W");
+  var r=$("iss-rows");r.textContent="";
+  r.appendChild(row("고도",nf(issPos.alt,0)+" km"));r.appendChild(row("속도",nf(issPos.vel,0)+" km/h"));
+  r.appendChild(row("햇빛",issSunlit(issPos.v,sunDir)?"햇빛 받는 중":"지구 그림자 속"));
+  r.appendChild(row("지구 한 바퀴","약 92분"));
+}
+
+/* ---------- 앱으로 설치 (홈 화면) ---------- */
+if("serviceWorker" in navigator&&/github\.io$/.test(location.hostname)){try{navigator.serviceWorker.register("sw.js").catch(function(){})}catch(_){}}
+
 /* ---------- 루프 ---------- */
 var clockEl=$("clock"),lastSec=-1,lastT=performance.now();
 function frame(t){
@@ -579,12 +793,17 @@ function frame(t){
     }
     clampCam();
   }
+  quakeMat.uniforms.time.value=t/1000;
+  if(satrec){var ip=issAt(now+shiftMin*60000);if(ip){issPos=ip;if(Math.abs(now+shiftMin*60000-issOrbitAt)>30000)buildOrbit(now+shiftMin*60000)}}
+  else if(issLive){issPos=issLive}
+  if(issPos){issSprite.position.copy(issPos.v);var ps=0.055*(cam.dist-0.6)*(1+0.12*Math.sin(t/300));issSprite.scale.set(ps,ps,1)}
+  issSprite.visible=!!issPos;
   camera.position.copy(ll2v(cam.lat,cam.lon,cam.dist));camera.up.set(0,1,0);camera.lookAt(0,0,0);
   renderer.render(scene,camera);
   var sec=Math.floor(now/1000);
   if(sec!==lastSec){lastSec=sec;var d=new Date(now);
     clockEl.textContent=(shiftMin?"시간 이동 "+(shiftMin>0?"+":"−")+hm(Math.abs(shiftMin))+" → UTC "+new Date(now+shiftMin*60000).toISOString().slice(11,16):"UTC "+d.toISOString().slice(11,19))+" · 태양 직하점 "+Math.abs(s.lat).toFixed(1)+"°"+(s.lat>=0?"N":"S")+" "+Math.abs(s.lon).toFixed(1)+"°"+(s.lon>=0?"E":"W");
-    tickPanel();}
+    tickPanel();tickISS();}
 }
 resize();
 var kr=null;for(var i=0;i<features.length;i++)if(features[i].id==="410"){kr=features[i];break}

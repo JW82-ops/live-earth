@@ -121,6 +121,44 @@ async function updateClouds() {
   return null;
 }
 
+// 최근 지진(USGS)과 국제우주정거장 궤도 요소(TLE). 페이지는 실시간 서버를 먼저 쓰고, 이 파일은 예비용이다.
+async function updateQuakes() {
+  const txt = await get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson");
+  try {
+    const j = JSON.parse(txt);
+    const items = j.features.map((f) => ({
+      lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1], depth: f.geometry.coordinates[2],
+      mag: f.properties.mag, time: f.properties.time, place: f.properties.place, url: f.properties.url, id: f.id,
+    }));
+    console.log(`quakes: ${items.length}`);
+    return { at: new Date().toISOString(), items };
+  } catch { console.log("quakes: unavailable"); return null; }
+}
+const TLE_SOURCES = [
+  "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE",
+  "https://live.ariss.org/iss.txt",
+];
+async function updateIss() {
+  for (const url of TLE_SOURCES) {
+    const txt = await get(url);
+    const lines = (txt || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const i = lines.findIndex((l) => l.startsWith("1 25544"));
+    if (i >= 0 && lines[i + 1]?.startsWith("2 25544")) {
+      console.log(`iss: ${url}`);
+      return { at: new Date().toISOString(), l1: lines[i], l2: lines[i + 1] };
+    }
+  }
+  console.log("iss: unavailable");
+  return null;
+}
+async function keepOrPrev(name, fresh) {
+  if (fresh) return fresh;
+  if (process.env.SITE_URL) {
+    try { const j = JSON.parse((await get(process.env.SITE_URL + "data/" + name)) || "null"); if (j) return j; } catch {}
+  }
+  return null;
+}
+
 await mkdir(DATA, { recursive: true });
 // 이전 데이터는 저장소가 아니라 배포된 사이트에서 가져온다 (수집 실패 시 유지용).
 let prev = {};
@@ -131,7 +169,11 @@ if (!prev.items) {
   try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
 }
 
-let [{ items, ok }, clouds] = await Promise.all([updateNews(), updateClouds()]);
+let [{ items, ok }, clouds, quakes, iss] = await Promise.all([updateNews(), updateClouds(), updateQuakes(), updateIss()]);
+quakes = await keepOrPrev("quakes.json", quakes);
+iss = await keepOrPrev("iss.json", iss);
+if (quakes) await writeFile(new URL("quakes.json", DATA), JSON.stringify(quakes));
+if (iss) await writeFile(new URL("iss.json", DATA), JSON.stringify(iss));
 if (!clouds && prev.clouds && process.env.SITE_URL) {
   const buf = await get(process.env.SITE_URL + "data/" + prev.clouds.file, true);
   if (buf && buf.length > 50000) { await writeFile(new URL(prev.clouds.file, DATA), buf); clouds = prev.clouds; }

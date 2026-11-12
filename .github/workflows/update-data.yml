@@ -40,7 +40,7 @@ jobs:
       - name: Prepare site folder
         run: |
           mkdir -p _site
-          cp -r index.html countries.js world.js snapshot.js earth-*.jpg earth-*.png .nojekyll data _site/
+          cp -r index.html *.js *.jpg *.png manifest.webmanifest .nojekyll data _site/
 
       - uses: actions/configure-pages@v5
 
