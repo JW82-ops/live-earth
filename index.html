@@ -185,6 +185,7 @@ body.touring #tourhint{display:block;animation:fadeaway 5s forwards}
 #labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .lbl{position:absolute;left:0;top:0;white-space:nowrap;font-size:11px;line-height:16px;letter-spacing:.04em;color:rgba(233,238,245,.8);text-shadow:0 1px 4px #000,0 0 2px #000;will-change:transform}
 .lbl.cty{font-weight:500}
+.lbl.cap{font-weight:600;color:#fff0d0}
 .lbl.city{color:#ffe2b0}.lbl.city::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:#ffd27a;margin-right:4px;vertical-align:1px}
 #legend{position:fixed;left:16px;bottom:40px;background:rgba(9,14,23,.8);border:1px solid var(--line);border-radius:12px;padding:6px 10px 8px;font-size:11px;max-width:300px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 #legend[hidden]{display:none}
@@ -756,7 +757,7 @@ function findCountry(lat,lon){
 
 /* ---------- 카메라·터치 ---------- */
 var cam={lon:127.5,lat:24,dist:3.2,vLon:0,vLat:0}, target=null, fitDist=3, lastTouch=0;
-function clampCam(){cam.lat=Math.max(-85,Math.min(85,cam.lat));cam.dist=Math.max(1.22,Math.min(Math.max(7,fitDist*1.4,tour?24:0),cam.dist))}
+function clampCam(){cam.lat=Math.max(-85,Math.min(85,cam.lat));cam.dist=Math.max(1.035,Math.min(Math.max(7,fitDist*1.4,tour?24:0),cam.dist))}
 function resize(){
   if(rec){layoutRec();return}
   var w=stage.clientWidth||innerWidth,h=stage.clientHeight||innerHeight;
@@ -2455,15 +2456,27 @@ features.forEach(function(f){
   LBL.push({t:"c",name:c.ko,area:c.ar,v:ll2v(la,lo,1.004),el:null});
 });
 LBL.sort(function(a,b){return b.area-a.area});
-var CLBL=CITIES.map(function(x){return {t:"t",name:LANG==="en"?x[1]:x[0],v:ll2v(x[2],x[3],1.004),el:null}});
-function hideLabels(){LBL.concat(CLBL).forEach(function(L){if(L.el)L.el.style.display="none"})}
+var CLBL=CITIES.map(function(x){return {t:"t",name:LANG==="en"?x[1]:x[0],pop:5e3,v:ll2v(x[2],x[3],1.004),el:null}}),BIGC=null,bigLoading=false;
+function loadBigCities(){
+  if(bigLoading)return;bigLoading=true;
+  getJSON("data/cities.json?v="+Math.floor(Date.now()/(24*3600000))).then(function(j){
+    if(!j||!j.items)throw 0;var ko=LANG!=="en";
+    BIGC=j.items.map(function(x){return {t:"t",name:(ko&&x[0])?x[0]:x[1],pop:x[4],cap:x[6],v:ll2v(x[2],x[3],1.003),n:ll2v(x[2],x[3],1),el:null}});
+    CLBL.forEach(function(L){if(L.el)L.el.style.display="none"});
+  }).catch(function(){bigLoading=false});
+}
+function hideLabels(){LBL.concat(CLBL).concat(BIGC||[]).forEach(function(L){if(L.el)L.el.style.display="none"})}
 var lblFrame=0;
 function updateLabels(){
   if(!labelsOn||tour||rec){hideLabels();return}
   if(++lblFrame%2)return;
   var r=renderer.domElement.getBoundingClientRect(),cd=camera.position.clone().sub(lookCur).normalize(),placed=[],d=cam.dist,fd=fitDist;
   [".hrow","#clock",".tools","#legend","#ldrawer","#panel.open"].forEach(function(q){var e=document.querySelector(q);if(!e||e.hidden||!e.offsetParent&&q!=="#panel.open")return;var b=e.getBoundingClientRect();if(b.width&&b.height)placed.push([b.left-6,b.top-4,b.right+6,b.bottom+4])});
-  var thr=d>fd*0.92?2.5e6:d>fd*0.75?7e5:d>fd*0.6?1.5e5:d>1.7?3e4:0,showCity=d<fd*0.72,maxN=innerWidth<=720?28:60,n=0;
+  var kz=(d-1)/Math.max(0.3,fd-1);
+  var thr=kz>0.9?2.5e6:kz>0.72?7e5:kz>0.55?1.5e5:kz>0.35?3e4:0;
+  var cpop=kz>0.72?1e12:kz>0.55?5000:kz>0.42?2000:kz>0.3?700:kz>0.2?250:kz>0.12?100:kz>0.06?40:0;
+  var showCity=cpop<1e12,maxN=(innerWidth<=720?28:60)+(kz<0.2?(innerWidth<=720?20:40):0),n=0;
+  if(showCity&&!BIGC)loadBigCities();
   var tryPlace=function(L,cls){
     var facing=L.v.clone().normalize().dot(cd);if(facing<0.42||hidden(L.v)){if(L.el)L.el.style.display="none";return}
     tmpV.copy(L.v).project(camera);var x=(tmpV.x+1)/2*r.width+r.left,y=(1-tmpV.y)/2*r.height+r.top;
@@ -2474,7 +2487,12 @@ function updateLabels(){
     placed.push(bx);n++;L.el.style.display="";L.el.style.transform="translate("+(x-w/2).toFixed(1)+"px,"+(y-h/2).toFixed(1)+"px)";L.el.style.opacity=Math.min(1,(facing-0.42)*4).toFixed(2);
     if(!L.w||L.w<2)L.w=L.el.offsetWidth;
   };
-  if(showCity)CLBL.forEach(function(L){tryPlace(L,"city")});else CLBL.forEach(function(L){if(L.el)L.el.style.display="none"});
+  if(BIGC){
+    var cdn=cd,minDot=0.42+Math.min(0.5,(1-kz)*0.0);
+    for(var bi=0;bi<BIGC.length;bi++){var L=BIGC[bi];
+      if(!showCity||(L.pop<cpop&&!(L.cap&&L.pop*4>=cpop))||L.n.dot(cdn)<0.42){if(L.el&&L.el.style.display!=="none")L.el.style.display="none";continue}
+      tryPlace(L,L.cap?"city cap":"city")}
+  }else if(showCity)CLBL.forEach(function(L){tryPlace(L,"city")});else CLBL.forEach(function(L){if(L.el)L.el.style.display="none"});
   LBL.forEach(function(L){if(L.area>=thr)tryPlace(L,"cty");else if(L.el)L.el.style.display="none"});
 }
 
@@ -2621,6 +2639,7 @@ function frame(t){
   aurMat.uniforms.time.value=t/1000;
   for(var sj=0;sj<STORMS.length;sj++){var sm=STORMS[sj];sm.sprite.material.rotation+=dt*(sm.pos[1]>=0?1.4:-1.4);var ss=0.055*(cam.dist-0.6);sm.sprite.scale.set(ss,ss,1);sm.sprite.visible=!hidden(sm.v)}
   lookCur.lerp(lookGoal,1-Math.exp(-Math.min(0.25,rdt)*1.6));
+  var nearW=Math.max(0.004,Math.min(0.05,(cam.dist-1)*0.25));if(Math.abs(camera.near-nearW)>nearW*0.2){camera.near=nearW;camera.updateProjectionMatrix()}
   camera.position.copy(ll2v(cam.lat,cam.lon,cam.dist)).add(lookCur);camera.up.set(0,1,0);camera.lookAt(lookCur);
   if(moonOn){moonNow=moonInfo(simT);moonMesh.position.copy(ll2v(moonNow.lat,moonNow.lon,MOON_D));moonMesh.lookAt(0,0,0);moonMesh.visible=camera.position.distanceTo(moonMesh.position)>0.7}else moonMesh.visible=false;
   for(var vj=0;vj<VOLC.length;vj++){var vs=0.05*(cam.dist-0.6);VOLC[vj].sprite.scale.set(vs,vs,1);VOLC[vj].sprite.visible=!hidden(VOLC[vj].v)}

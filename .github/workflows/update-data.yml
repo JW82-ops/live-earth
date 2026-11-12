@@ -32,6 +32,16 @@ jobs:
         with:
           node-version: 20
 
+      - name: Download world city list (GeoNames, about once a week)
+        env:
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: |
+          if [ "$(date -u +%u%H)" = "103" ] || ! curl -fsI "${SITE_URL}data/cities.json" >/dev/null 2>&1; then
+            curl -fsSL --retry 2 -o /tmp/cities.zip https://download.geonames.org/export/dump/cities15000.zip && unzip -o -q /tmp/cities.zip -d /tmp && echo "downloaded" || echo "geonames unavailable"
+          else
+            echo "skip (weekly)"
+          fi
+
       - name: Fetch latest news and cloud map
         env:
           SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/

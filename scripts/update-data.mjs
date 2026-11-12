@@ -471,6 +471,25 @@ async function updateFacts() {
   return Object.keys(facts.visa).length || Object.keys(facts.econ).length ? facts : null;
 }
 
+// 전 세계 도시 (GeoNames cities15000, 인구 4만 이상 + 수도 + 한·중·일·대만 1.5만 이상). 한글 이름은 별칭 중 한글이 있는 가장 짧은 것.
+async function updateCities() {
+  let txt = null;
+  try { txt = await readFile("/tmp/cities15000.txt", "utf8"); } catch { console.log("cities: no download this run"); return null; }
+  const items = [], HAN = /[\uAC00-\uD7A3]/, LAT = /[A-Za-z]/;
+  for (const line of txt.split("\n")) {
+    const c = line.split("\t"); if (c.length < 15) continue;
+    const pop = +c[14] || 0, fc = c[7], cc = c[8];
+    const keep = pop >= 40000 || fc === "PPLC" || (["KR", "JP", "CN", "TW", "KP"].includes(cc) && pop >= 15000);
+    if (!keep) continue;
+    let ko = "";
+    for (const n of (c[3] || "").split(",")) if (HAN.test(n) && !LAT.test(n) && (!ko || n.length < ko.length)) ko = n;
+    items.push([ko, c[2] || c[1], +(+c[4]).toFixed(3), +(+c[5]).toFixed(3), Math.round(pop / 1000), cc, fc === "PPLC" ? 1 : 0]);
+  }
+  items.sort((a, b) => b[4] - a[4]);
+  console.log(`cities: ${items.length} (korean names ${items.filter((x) => x[0]).length})`);
+  return items.length > 1000 ? { at: new Date().toISOString(), items } : null;
+}
+
 async function keepOrPrev(name, fresh) {
   if (fresh) return fresh;
   if (process.env.SITE_URL) {
@@ -489,12 +508,14 @@ if (!prev.items) {
   try { prev = JSON.parse(await readFile(new URL("news.json", DATA), "utf8")); } catch {}
 }
 
-const [prevMag, prevAir, prevWind, prevSats, prevQY, prevFires, prevFacts] = await Promise.all(["magazines.json", "air.json", "wind.json", "sats.json", "quakes-year.json", "fires.json", "facts.json"].map(prevSite));
+const [prevMag, prevAir, prevWind, prevSats, prevQY, prevFires, prevFacts, prevCities] = await Promise.all(["magazines.json", "air.json", "wind.json", "sats.json", "quakes-year.json", "fires.json", "facts.json", "cities.json"].map(prevSite));
 const maybe = (prev, hours, fn, label) => isFresh(prev, hours) ? (console.log(`${label}: reuse (fresh)`), Promise.resolve(prev)) : fn().then((v) => v || prev);
 let [{ items, ok }, clouds, quakes, iss, storms, aurora, fxhist, air, volcanoes, magazines] = await Promise.all([
   updateNews(), updateClouds(), updateQuakes(), updateIss(), updateStorms(), updateAurora(), updateFxHist(),
   maybe(prevAir, 2.9, updateAir, "air"), updateVolcanoes(), updateMagazines(prevMag),
 ]);
+const cities = await maybe(prevCities?.items?.length ? prevCities : null, 24 * 6.5, updateCities, "cities");
+if (cities) await writeFile(new URL("cities.json", DATA), JSON.stringify(cities));
 const facts = await maybe(prevFacts?.visa && Object.keys(prevFacts.visa).length ? prevFacts : null, 20, updateFacts, "facts");
 if (facts) await writeFile(new URL("facts.json", DATA), JSON.stringify(facts));
 const [wind, sats, quakesYear, fires] = await Promise.all([
