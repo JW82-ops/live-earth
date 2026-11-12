@@ -372,8 +372,21 @@ async function updateQuakesYear() {
 async function updateFires() {
   const key = process.env.FIRMS_KEY;
   if (!key) { console.log("fires: no FIRMS_KEY secret, skipped"); return null; }
-  const csv = await get(`https://firms.modaps.eosdis.nasa.gov/api/area/csv/${key}/VIIRS_SNPP_NRT/world/1`);
-  if (!csv || !/latitude/.test(csv.slice(0, 200))) { console.log("fires: unavailable " + (csv || "").slice(0, 120)); return null; }
+  let csv = null, used = "";
+  for (const src of ["VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "VIIRS_SNPP_NRT", "MODIS_NRT"]) {
+    for (const area of ["world", "-180,-90,180,90"]) {
+      for (const days of [1, 2]) {
+        const txt = await get(`https://firms.modaps.eosdis.nasa.gov/api/area/csv/${key}/${src}/${area}/${days}`);
+        const rows = txt && /latitude/.test(txt.slice(0, 300)) ? txt.trim().split(/\r?\n/).length - 1 : -1;
+        console.log(`fires: try ${src} ${area} ${days}d -> ${rows < 0 ? "bad response: " + String(txt || "").slice(0, 80).replace(/\s+/g, " ") : rows + " rows"}`);
+        if (rows > 0) { csv = txt; used = src; break; }
+        await sleep(800);
+      }
+      if (csv) break;
+    }
+    if (csv) break;
+  }
+  if (!csv) return null;
   const lines = csv.trim().split(/\r?\n/), head = lines[0].split(","), iLa = head.indexOf("latitude"), iLo = head.indexOf("longitude"), iF = head.indexOf("frp"), iC = head.indexOf("confidence");
   const cells = new Map();
   for (let k = 1; k < lines.length; k++) {
@@ -383,8 +396,8 @@ async function updateFires() {
     cur[2]++; cur[3] += +c[iF] || 0; cells.set(key2, cur);
   }
   const out = [...cells.values()].map((c) => [c[0], c[1], c[2], Math.round(c[3])]);
-  console.log(`fires: ${lines.length - 1} detections -> ${out.length} cells`);
-  return { at: new Date().toISOString(), cells: out };
+  console.log(`fires: ${used} ${lines.length - 1} detections -> ${out.length} cells`);
+  return out.length ? { at: new Date().toISOString(), src: used, cells: out } : null;
 }
 
 async function keepOrPrev(name, fresh) {
