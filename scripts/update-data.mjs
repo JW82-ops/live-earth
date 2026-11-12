@@ -362,7 +362,7 @@ async function updateSats() {
 // 최근 1년 규모 5 이상 지진 (USGS, 하루 한 번)
 async function updateQuakesYear() {
   const start = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
-  let j; try { j = JSON.parse(await get(`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${start}&minmagnitude=5&orderby=time-asc`)); } catch { console.log("quakes-year: unavailable"); return null; }
+  let j; try { j = JSON.parse(await get(`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${start}&minmagnitude=5&orderby=time-asc&limit=20000`)); } catch { console.log("quakes-year: unavailable"); return null; }
   const items = (j?.features || []).map((f) => [+f.geometry.coordinates[0].toFixed(2), +f.geometry.coordinates[1].toFixed(2), Math.round(f.geometry.coordinates[2]), f.properties.mag, Math.round(f.properties.time / 1000), f.properties.place || ""]);
   console.log(`quakes-year: ${items.length}`);
   return items.length ? { at: new Date().toISOString(), from: start, items } : null;
