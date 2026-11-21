@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deploy1.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -60,5 +60,15 @@ jobs:
         with:
           path: _site
 
+      # GitHub 쪽이 잠깐 불안정해 "artifact를 못 찾음"으로 실패하는 경우가 있어, 잠시 기다렸다 한 번 더 시도한다.
+      - id: deploy1
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before retrying deploy
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 60
+
       - id: deployment
+        if: steps.deploy1.outcome == 'failure'
         uses: actions/deploy-pages@v4
